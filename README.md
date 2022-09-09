@@ -162,14 +162,14 @@ Ionic Migration (e.g. 3.x -> 4.x): https://ionicframework.com/docs/reference/mig
   - WebView - a special widget you can use in Native App Development which is a fully-fledged browser that doesn't look like one (you don't have url at the top, etc), it just is a full-screen browser
   - WebView - host a web page inside of a native app
     - e.g. you can open websites inside of an app (twitter/messenger, etc) - a built-in browser opens up
-      - and that what is Ionic uses - with tools like Capacitor or Cordova you in the end get a mobile app shell that has such a WebView in it, and also then has some capabilites of launching a simple web server running mobily on the device that hosts your Ionic Web App inside of that WebView
+      - and that what is Ionic uses - with tools like Capacitor or Cordova you in the end get a mobile app shell that has such a WebView in it, and also then has some capabilites of launching a simple web server running mobile on the device that hosts your Ionic Web App inside of that WebView
         - then Cordova or Capacitor gives you a "bridge" through which you can tap into native device features from inside your Web App
 
 <img src="./img/compiled-web-view.png" alt="compiled-WebView">
 
 #### What's a "WebView"?
 
-WebView - allows you run your Web App inside of a Native App that renders this full-screen browser:
+WebView - allows you to run your Web App inside of a Native App that renders this full-screen browser:
 
 <img src="./img/webview.png" alt="WebView">
 
@@ -208,3 +208,23 @@ Problem Solving & How To Get The Most Out Of The Course
 <br><br>
 
 ## **Section 02: Angular Refresher** <a href="#navi">&#8593;</a> <span id="t02"></span>
+
+<br><br>
+
+1. <a href="#i0200">Angular Core Features - refresher</a>
+2. <a href="#i0201">x</a>
+
+<br><br>
+
+### **Angular Core Features - refresher** <span id="i0200"></span><a href="#t02">&#8593;</a>
+
+<br>
+
+#### 4 Types of Data-Binding in Angular
+
+- property binding (e.g. `[property]="tsExpression"`),
+- event binding (e.g. `(event)="tsExpression"`),
+- string interpolation (e.g. `{{ person.name }}`),
+- two-way binding (`[(ngModel)]="tsExpression"`)
+
+<br>
