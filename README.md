@@ -14,6 +14,8 @@
 
 ### <a href="#t03">**Section 03: Ionic Component Basics**</a>
 
+### <a href="#t04">**Section 04: Angular + Ionic**</a>
+
 </nav>
 
 <br><br>
@@ -849,3 +851,242 @@ cancelBtm.addEventListener("click", () => {
 <br>
 
 Ionic Component Docs: https://ionicframework.com/docs/components/
+
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 04: Angular + Ionic** <a href="#navi">&#8593;</a> <span id="t04"></span>
+
+<br><br>
+
+1. <a href="#i0400">Creating a New Ionic Angular Project</a>
+2. <a href="#i0401">How Angular & Ionic Work Together</a>
+3. <a href="#i0402">Using Angular Features on Ionic Components</a>
+4. <a href="#i0403">Setting Up Angular Routes</a>
+5. <a href="#i0404">Using Angular Features on Ionic Components</a>
+6. <a href="#i0405">Extracting and Displaying Route Param Data</a>
+7. <a href="#i0406">Navigating Between Pages</a>
+8. <a href="#i0407">Deleting a Recipe</a>
+9. <a href="#i0408">Injecting Ionic Controllers</a>
+10. <a href="#i0409">Angular Components vs Ionic Components</a>
+
+<br><br>
+
+### **Creating a New Ionic Angular Project** <span id="i0400"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+`ionic start`
+
+<br><br>
+
+### **How Angular & Ionic Work Together** <span id="i0401"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+The @ionic/angular package - wrapper around Ionic Web Components (Angular specific) which makes the usage of those easier and more efficient in Angular Projects:
+
+<img src="./img/ionic-angular-wrapper.png">
+
+`IonicModule.forRoot()` - includes those Ionic Web Components
+
+<br>
+
+Run Ionic App: `ionic serve`
+
+<br><br>
+
+### **Adding & Loading a New Page** <span id="i0402"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+`ionic generate`
+
+- page
+- component
+- service
+- module
+- class
+- directive
+- guard
+
+<br>
+
+`ionic generate page` - generates a new "page" - a new component, with a module & routing module.
+
+It also includes that "page" in app-routing module to lazy-load it.
+
+<br>
+
+```html
+<ion-app>
+  <ion-router-outlet></ion-router-outlet>
+</ion-app>
+```
+
+`ion-app` - wrapper around your entire application
+
+`ion-router-outlet` - directive added by @ionic/angular
+
+<br><br>
+
+### **Using Angular Features on Ionic Components** <span id="i0403"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+- `<ion-avatar></ion-avatar>` - component that wraps the `<ion-img></ion-img>`
+- `<ion-img></ion-img>` - it's like an img element, but it is also loaded only when it is visible
+
+<br>
+
+```html
+<ion-content>
+  <ion-list>
+    <ion-item *ngFor="let recipe of recipes">
+      <ion-avatar slot="start">
+        <ion-img [src]="recipe.imageUrl"></ion-img>
+      </ion-avatar>
+      <ion-label> {{ recipe.title }} </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>
+```
+
+<br><br>
+
+### **Managing State with Services** <span id="i0404"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+create a new page (component + routing + lazy loading): `ionic generate page page-name`
+
+<br>
+
+```ts
+  getAllRecipes() {
+    return [...this.recipes];
+  }
+
+  getRecipe(recipeId: string) {
+    // find - if returns true - that means this is the object we're looking for
+    // compare the id of the recipe I'm looking at with the recipeId I got as an argument
+    // if these are equal - I have the recipe I want to return
+    // wrap into object, copy everything with spread operator
+    return { ...this.recipes.find((recipe) => recipe.id === recipeId) };
+  }
+```
+
+<br><br>
+
+### **Extracting and Displaying Route Param Data** <span id="i0405"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+CSS Utilities: https://ionicframework.com/docs/layout/css-utilities
+
+<br>
+
+```ts
+this.activatedRoute.paramMap.subscribe((paramMap) => {
+  if (!paramMap.has("recipeId")) {
+    this.router.navigate(["/recipes"]);
+    return;
+  }
+  const recipeId = paramMap.get("recipeId");
+  this.loadedRecipe = this.recipesService.getRecipe(recipeId);
+});
+```
+
+<br><br>
+
+### **Navigating Between Pages** <span id="i0406"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+- `routerLink`
+- ```html
+  <ion-buttons slot="start">
+    <ion-back-button defaultHref="/recipes"></ion-back-button>
+  </ion-buttons>
+  ```
+  - `defaultHref` - if there is no browser history, navigate to `defaultHref="path"`
+
+So you use Angular features, and Ionic just adds animations, Ionic also keeps track of your navigation moves - it constructs a stack of pages under the hood
+
+<br><br>
+
+### **Deleting a Recipe** <span id="i0407"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+```html
+<ion-buttons slot="primary">
+  <ion-button (click)="onDeleteRecipe()">
+    <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+  </ion-button>
+</ion-buttons>
+```
+
+```ts
+deleteRecipe(recipeId: string) {
+  // filter: true - keep element, false - discard
+  // keep all the elements but the element of id - recipeId
+  // so if they are not equal - return true, otherwise false - discard object
+  this.recipes = this.recipes.filter((recipe) => recipe.id !== recipeId);
+  // this.recipes = this.recipes.filter((recipe) => {
+  //   if (recipe.id === recipeId) {
+  //     return false;
+  //   }
+  // });
+}
+```
+
+<br><br>
+
+### **Injecting Ionic Controllers** <span id="i0408"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+```ts
+constructor(private alertCtr: AlertController) {}
+
+onDeleteRecipe() {
+  this.alertCtr
+    .create({
+      header: 'Are you sure?',
+      message: 'Do you really want to delete the recipe?',
+      buttons: [
+        {
+          text: 'Cancel',
+          // close dialog (role: 'cancel')
+          role: 'cancel',
+        },
+        {
+          text: 'Delete',
+          // handler - holds a function that will execute
+          // when this button is pressed
+          handler: () => {
+            this.recipesService.deleteRecipe(this.loadedRecipe.id);
+            this.router.navigate(['/recipes']);
+          },
+        },
+      ],
+    })
+    .then((alertEl) => alertEl.present());
+}
+```
+
+<br><br>
+
+### **Angular Components vs Ionic Components** <span id="i0409"></span><a href="#t04">&#8593;</a>
+
+<br>
+
+<img src="./img/ng-components-ionic-components.png">
+
+<br><br>
+
+<hr>
