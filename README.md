@@ -1093,7 +1093,7 @@ onDeleteRecipe() {
 
 <br><br>
 
-## **Section 05: Building Native Apps with Capacitor** <a href="#navi">&#8593;</a> <span id="t04"></span>
+## **Section 05: Building Native Apps with Capacitor** <a href="#navi">&#8593;</a> <span id="t05"></span>
 
 <br><br>
 
@@ -1138,7 +1138,7 @@ Steps to create Android App:
 
 <br>
 
-You can also run: `ionic capacitor run android` (usually does not work)
+You can also run: `ionic capacitor run android` (usually does not work, use your android device in case it doesn't)
 
 - it will run `ng build`, `ionic capacitor add android` plus it will open your app in Android Studio.
 
@@ -1154,4 +1154,42 @@ if something doesn't work try those:
 
 Live reload: `ionic capacitor run android -l`
 
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 06: Debugging** <a href="#navi">&#8593;</a> <span id="t06"></span>
+
+<br><br>
+
+1. <a href="#i0600">Introduction</a>
+
+<br><br>
+
+### **Introduction** <span id="i0600"></span><a href="#t06">&#8593;</a>
+
 <br>
+
+In this module:
+
+- Debugging in the Browser
+- Debugging Native Apps
+
+<br>
+
+Debugging (browser):
+
+- Error Messages & console.log
+- browser DevTools (console/elements/sources(breakpoints)/network/performance/memory/etc)
+
+Debugging (android):
+
+- `chrome://inspect/#devices`
+- inspect
+  - there you can use all of the chrome devTools
+
+<br><br>
+
+<hr>
