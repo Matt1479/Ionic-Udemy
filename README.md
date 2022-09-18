@@ -1090,3 +1090,68 @@ onDeleteRecipe() {
 <br><br>
 
 <hr>
+
+<br><br>
+
+## **Section 05: Building Native Apps with Capacitor** <a href="#navi">&#8593;</a> <span id="t04"></span>
+
+<br><br>
+
+### **Creating an Android App** <span id="i0500"></span><a href="#t05">&#8593;</a>
+
+<br>
+
+Capacitor docs: https://capacitorjs.com
+
+Ionic - Android Development docs: https://ionicframework.com/docs/developing/android
+
+<br>
+
+Project Setup:
+
+https://ionicframework.com/docs/developing/android#project-setup
+
+<br>
+
+Steps to create Android App:
+
+- Build your App: `ng build`
+- run: `ionic capacitor add android`
+- set the Package ID. `capacitor.config.ts`:
+
+  ```ts
+  import { CapacitorConfig } from "@capacitor/cli";
+
+  const config: CapacitorConfig = {
+    appId: "com.udemy.course.ionic.angular",
+    appName: "ionic-angular-course",
+    webDir: "www",
+    bundledWebRuntime: false,
+  };
+
+  export default config;
+  ```
+
+  - it has to be unique ID
+
+- run: `ionic capacitor copy android`
+
+<br>
+
+You can also run: `ionic capacitor run android` (usually does not work)
+
+- it will run `ng build`, `ionic capacitor add android` plus it will open your app in Android Studio.
+
+<br>
+
+if something doesn't work try those:
+
+`ionic capacitor sync`
+
+`ionic capacitor open android`
+
+<br>
+
+Live reload: `ionic capacitor run android -l`
+
+<br>
