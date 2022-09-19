@@ -1193,3 +1193,249 @@ Debugging (android):
 <br><br>
 
 <hr>
+
+<br><br>
+
+## **Section 07: Navigation & Routing in Ionic Apps** <a href="#navi">&#8593;</a> <span id="t07"></span>
+
+<br><br>
+
+1. <a href="#i0700">Introduction</a>
+2. <a href="#i0701">How Routing Work In An Ionic + Angular App</a>
+3. <a href="#i0702">zIonic Page Caching & Extra Lifecycle Hookszz</a>
+4. <a href="#i0703">Planning the Course Project</a>
+5. <a href="#i0704">Creating Our App Pages</a>
+6. <a href="#i0705">Adding Tabs to the App</a>
+7. <a href="#i0706">Outputting "Places"</a>
+8. <a href="#i0707">Adding Forward Navigation</a>
+9. <a href="#i0708">Going Back with NavController</a>
+10. <a href="#i0709">NEXT</a>
+
+<br><br>
+
+### **Introduction** <span id="i0700"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+In this module:
+
+- Angular Router & NavController
+- Using Tabs
+- Using a SideDrawer
+- Overlays (Modal)
+- Guards
+
+<br><br>
+
+### **How Routing Work In An Ionic + Angular App** <span id="i0701"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+- `ion-router` - provides animations/transitions when switching between different routes/pages
+- (stack) pages in Ionic are cached (stored in memory)
+
+<img src="./img/ionic-nav.png">
+
+<br><br>
+
+### **Ionic Page Caching & Extra Lifecycle Hooks** <span id="i0702"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+- `ionViewWillEnter` - runs after `ngOnInit` - executes right after the content of the page has been loaded
+- `ionViewDidEnter` - runs right afrer `ionViewWillEnter`
+
+both are called whenever a page becomes visible
+
+<br>
+
+If a page is in cache, and you're not seeing it because another page is on top of it (in the stack of pages), it will actually never be destroyed, so ngOnDestroy will never be called.
+
+<br>
+
+- `ionViewWillLeave`
+- `ionViewDidLeave`
+
+both are called whenever a page becomes invisible, whenever a new page is on top of it, but it will also be called in places where ngOnDestroy is not called.
+
+<img src="./img/ng-ion-page-lifecycle.png">
+
+<br>
+
+So this is this stack of pages and how Ionic caches pages. You have to be aware of the fact that ngOnInit and ngOnDestroy will NOT run on every page every time you leave it, it depends whether you're popping the page or pushing a new page on top of it. There you should rely on those ion hooks to manage state data - whenever a page becomes visible or invisible.
+
+<br>
+
+```ts
+ngOnInit() {
+  console.log('ngOnInit');
+  console.log(this.recipes);
+}
+
+ionViewWillEnter() {
+  this.recipes = this.recipesService.getAllRecipes();
+  console.log('ionViewWillEnter');
+}
+
+ionViewDidEnter() {
+  console.log('ionViewDidEnter');
+}
+
+ionViewWillLeave() {
+  console.log('ionViewWillLeave');
+}
+
+ionViewDidLeave() {
+  console.log('ionViewDidLeave');
+}
+
+ngOnDestroy(): void {
+  console.log('ngOnDestroy');
+}
+```
+
+<br><br>
+
+### **Planning the Course Project** <span id="i0703"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+<img src="./img/course-project-plan-p0.png">
+<img src="./img/course-project-plan-p1.png">
+
+<br><br>
+
+### **Creating Our App Pages** <span id="i0704"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+`ionic generate page ...`
+
+<br><br>
+
+### **Adding Tabs to the App** <span id="i0705"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+Different pages have their own stack, so the navigation stack is not mixed.
+
+<br>
+
+https://ionicframework.com/docs/api/tabs
+
+<br>
+
+```html
+<ion-tab-button tab="discover">
+  <ion-label>Discover</ion-label>
+  <ion-icon name="search"></ion-icon>
+</ion-tab-button>
+```
+
+- `tab="uniqueIdentifier"`
+  - the identifier has to match the name of your route
+    - for example: `{ path: 'discover' }`, `tab="discover"`
+
+<br><br>
+
+### **Outputting "Places"** <span id="i0706"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+`<ion-thumbnail></ion-thumbnail>` - it's basically ion-avatar, but doesn't render a rounded image, instead it renders a squre image
+
+```html
+<ion-content>
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-sm="8" offset-sm="2" class="ion-text-center">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ loadedPlaces[0].title }}</ion-card-title>
+            <ion-card-subtitle>
+              {{ loadedPlaces[0].price | currency }} / Night
+            </ion-card-subtitle>
+          </ion-card-header>
+          <ion-img [src]="loadedPlaces[0].imageUrl"></ion-img>
+          <ion-card-content>
+            <p>{{ loadedPlaces[0].description }}</p>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col size="12" size-sm="8" offset-sm="2" class="ion-text-center">
+        <ion-list>
+          <ion-item *ngFor="let loadedPlace of loadedPlaces.slice(1)">
+            <ion-thumbnail slot="start">
+              <ion-img [src]="loadedPlace.imageUrl"></ion-img>
+            </ion-thumbnail>
+            <ion-label>
+              <h2>{{ loadedPlace.title }}</h2>
+              <p>{{ loadedPlace.description }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+```
+
+<br><br>
+
+### **Adding Forward Navigation** <span id="i0707"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+- `routerDirection="direction"` - this gives Ionic a hint about navigation direction (so it can play different animations)
+  - forward
+  - backward
+- `detail` - (html) attribute - renders arrow icon (e.g. forward arrow)
+
+<br><br>
+
+### **Going Back with NavController** <span id="i0708"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+First Option:
+
+```html
+<ion-buttons slot="start">
+  <ion-back-button defaultHref="/places/tabs/discover"></ion-back-button>
+</ion-buttons>
+```
+
+Ionic by default plays the forward animation if it doesn't know what the previous page was (or there could be no previous page).
+
+To use the proper animation we will use navController:
+
+```ts
+  constructor(private navController: NavController) {}
+
+  onBookPlace() {
+    // this.router.navigateByUrl('/places/tabs/discover');
+
+    // navigateBack takes either array of path segments or just the url
+    this.navController.navigateBack('/places/tabs/discover');
+  }
+```
+
+Under the hood `navController` uses the Angular Router.
+
+<br>
+
+A different way of navigating back:
+
+```ts
+// another way of navigating back - use pop() - it will pop the last page off the stack
+// the problem is it won't work if the stack of pages is empty
+this.navController.pop();
+```
+
+<br><br>
+
+### **NEXT** <span id="i0709"></span><a href="#t07">&#8593;</a>
+
+<br>
