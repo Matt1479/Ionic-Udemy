@@ -1209,7 +1209,15 @@ Debugging (android):
 7. <a href="#i0706">Outputting "Places"</a>
 8. <a href="#i0707">Adding Forward Navigation</a>
 9. <a href="#i0708">Going Back with NavController</a>
-10. <a href="#i0709">NEXT</a>
+10. <a href="#i0709">Navigating via Toolbar Buttons</a>
+11. <a href="#i0710">Adding a SideDrawer</a>
+12. <a href="#i0711">Assigning an id to menu & using it</a>
+13. <a href="#i0712">Opening + Closing the SideDrawer</a>
+14. <a href="#i0713">Adding Links & Switching Pages</a>
+15. <a href="#i0714">Adding the Auth Service</a>
+16. <a href="#i0715">Creating and Opening a Modal</a>
+17. <a href="#i0716">Closing the Modal & Passing Data</a>
+18. <a href="#i0717">Useful Resources & Links</a>
 
 <br><br>
 
@@ -1436,6 +1444,408 @@ this.navController.pop();
 
 <br><br>
 
-### **NEXT** <span id="i0709"></span><a href="#t07">&#8593;</a>
+### **Navigating via Toolbar Buttons** <span id="i0709"></span><a href="#t07">&#8593;</a>
 
 <br>
+
+any button you add to your toolbar should always be warpped in ion-buttons group.
+
+<br><br>
+
+### **Adding a SideDrawer** <span id="i0710"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+- official docs: https://ionicframework.com/docs/api/menu
+
+- `ion-menu` - needs contentId="id"
+- `ion-router-outlet` - needs id of that contentId set in ion-menu
+
+menu:
+
+```html
+<ion-app>
+  <ion-menu side="start" contentId="menuContent">
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Menu Title</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">Content goes here</ion-content>
+  </ion-menu>
+  <ion-router-outlet id="menuContent"></ion-router-outlet>
+</ion-app>
+```
+
+menu content:
+
+```html
+<ion-content class="ion-padding">
+  <ion-list>
+    <ion-item lines="none">
+      <ion-icon name="business" slot="start"></ion-icon>
+      <ion-label>Discover Places</ion-label>
+    </ion-item>
+    <ion-item lines="none">
+      <ion-icon name="checkbox-outline" slot="start"></ion-icon>
+      <ion-label>Your Bookings</ion-label>
+    </ion-item>
+    <ion-item lines="none">
+      <ion-icon name="exit" slot="start"></ion-icon>
+      <ion-label>Logout</ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>
+```
+
+<br><br>
+
+### **Assigning an id to menu & using it** <span id="i0711"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+assign an id to a menu:
+
+```html
+<ion-menu side="start" contentId="menuContent" menuId="mainMenu">
+  <!-- header, content, ... -->
+</ion-menu>
+<!-- outlet... -->
+```
+
+Now use that menu (of this id) anywhere you like:
+
+```html
+<ion-buttons slot="start">
+  <ion-menu-button menu="mainMenu"></ion-menu-button>
+</ion-buttons>
+```
+
+<br><br>
+
+### **Opening + Closing the SideDrawer** <span id="i0712"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+To add this functionality, you go to the page/component where you want to add hamburger icon, and you add it to the toolbar.
+
+- opening menu with hamburger icon:
+
+```html
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Component Title</ion-title>
+  </ion-toolbar>
+</ion-header>
+```
+
+- opening menu programmatically:
+
+```html
+<ion-buttons slot="start">
+  <ion-button (click)="onOpenMenu()">Open</ion-button>
+</ion-buttons>
+```
+
+```ts
+constructor(private menuController: MenuController) {}
+
+onOpenMenu() {
+  this.menuController.open('menuId');
+
+  // or toggle it
+  this.menuController.toggle('menuId');
+}
+```
+
+<br><br>
+
+### **Adding Links & Switching Pages** <span id="i0713"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+For an item to behave and look like a button, add `button` attribute:
+
+```html
+<ion-item button>
+  <!-- ... -->
+</ion-item>
+```
+
+Closing menu (when you click an item) - we got two options:
+
+- add click listener, inject `MenuController`, then manually call `close()`
+- wrap your list items (or anything) with `ion-menu-toggle`
+
+You can wrap your list items with `ion-menu-toggle` to close (or toggle to be precise) the main menu. You can wrap anything with `ion-menu-toggle` in your app that should close/toggle the main menu.
+
+<br>
+
+ion-toggle-menu takes an id in case you're using one (`<ion-menu-toggle menu="mainMenu">`)
+
+<br>
+
+Example:
+
+```html
+<ion-menu-toggle menu="mainMenu">
+  <ion-item lines="none" routerLink="/places/tabs/discover">
+    <ion-icon name="business" slot="start"></ion-icon>
+    <ion-label>Discover Places</ion-label>
+  </ion-item>
+</ion-menu-toggle>
+```
+
+<br><br>
+
+### **Adding the Auth Service** <span id="i0714"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+`canLoad` guard - runs before lazy loading code is fetched
+
+<br>
+
+`canLoad` - return true or false - determines whether you can go further or not
+
+<br><br>
+
+### **Creating and Opening a Modal** <span id="i0715"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+Docs: https://ionicframework.com/docs/api/modal
+
+Controller Modals: https://ionicframework.com/docs/api/modal#controller-modals
+
+<br>
+
+**Note**: If you had multiple components in your app which are in different Angular Modules that would open one and the same modal component, then you could create a shared module with that (modal) component in it that you import into all the other components where you need to open it.
+
+<br>
+
+- Creating & Opening a modal
+  - `ionic generate component compName`
+  - declare it in place where you need it OR create a module for it if you're going to share it across other components
+  - use `ModalController` to create/present it
+
+<br>
+
+Example Modal Component
+
+```html
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Modal title</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <h1>Modal content</h1>
+</ion-content>
+```
+
+Use/call in another component:
+
+```html
+<ion-button color="primary" class="ion-margin" (click)="onOpenModal()">
+  Open Modal
+</ion-button>
+```
+
+```ts
+constructor(private modalController: ModalController) {}
+
+onOpenModal() {
+  this.modalController
+    .create({
+      component: SampleModalComponent,
+    })
+    .then((modalElement) => modalElement.present());
+}
+```
+
+<br><br>
+
+### **Closing the Modal & Passing Data** <span id="i0716"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+- (1/2) Pass data to modal:
+
+```ts
+data: someType;
+
+onModalOpen() {
+  this.modalController
+    .create({
+      component: SampleModalComponent,
+      componentProps: { modalDataKey: this.data },
+      // you can also set the id (can be useful for dismissing)
+      // id: 'modalId'
+    })
+    .then((modalElement) => modalElement.present());
+}
+```
+
+- (2/2) pass data to modal: `componentProps: { anyKey: value }`
+
+<br>
+
+- Use/retrieve that data in the modal:
+
+```ts
+@Input() modalDataKey: someType;
+```
+
+```html
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ data.title }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-text-center ion-padding">
+  <p>{{ data.description }}</p>
+</ion-content>
+```
+
+<br>
+
+Close/dismiss a modal:
+
+```ts
+constructor(private modalController: ModalController) {}
+
+onCancel() {
+  this.modalController.dismiss();
+}
+```
+
+<br>
+
+You can pass arguments when dismissing/closing a modal:
+
+- data
+- role (e.g. cancel)
+- id (it could be useful if you have multiple modals open)
+
+<br>
+
+Adding a listener on modal to listen for modal data:
+
+```ts
+  onBookPlace() {
+    this.modalController
+      .create({
+        component: CreateBookingComponent,
+        componentProps: { selectedPlace: this.place },
+      })
+      .then((modalElement) => {
+        modalElement.present();
+        return modalElement.onDidDismiss(); // here
+      })
+      .then((resultData) => {
+        console.log(resultData.data, resultData.role);
+      });
+  }
+```
+
+<br>
+
+(course project's) Modal Code:
+
+- create modal
+
+```html
+<!-- ... -->
+
+<ion-content class="ion-text-center ion-padding">
+  <p>{{ selectedPlace.description }}</p>
+  <ion-button color="primary" (click)="onBookPlace()">Book!</ion-button>
+</ion-content>
+```
+
+```ts
+// ...
+export class CreateBookingComponent implements OnInit {
+  @Input() selectedPlace: Place;
+
+  constructor(private modalController: ModalController) {}
+
+  onCancel() {
+    this.modalController.dismiss(null, "cancel");
+  }
+
+  onBookPlace() {
+    this.modalController.dismiss(
+      { message: "this is a dummy message" },
+      "confirm"
+    );
+  }
+}
+```
+
+- present/use modal & get/pass data around:
+
+```html
+<!-- ... -->
+
+<ion-content class="ion-padding">
+  <ion-button color="primary" class="ion-margin" (click)="onBookPlace()">
+    Book
+  </ion-button>
+</ion-content>
+```
+
+```ts
+// ...
+export class PlaceDetailPage implements OnInit {
+  place: Place;
+
+  constructor(
+    private navController: NavController,
+    private placesService: PlacesService,
+    private activatedRoute: ActivatedRoute,
+    private modalController: ModalController
+  ) {}
+
+  // ...
+
+  onBookPlace() {
+    // this.navController.navigateBack('/places/tabs/discover');
+    this.modalController
+      .create({
+        component: CreateBookingComponent,
+        componentProps: { selectedPlace: this.place },
+      })
+      .then((modalElement) => {
+        modalElement.present();
+        return modalElement.onDidDismiss();
+      })
+      .then((resultData) => {
+        console.log(resultData.data, resultData.role);
+
+        if (resultData.role === "confirm") {
+          console.log("BOOKED");
+        }
+      });
+  }
+}
+```
+
+<br><br>
+
+### **Useful Resources & Links** <span id="i0717"></span><a href="#t07">&#8593;</a>
+
+<br>
+
+- Angular + Ionic Navigation Docs: https://ionicframework.com/docs/navigation/angular
+
+<br><br>
+
+<hr>

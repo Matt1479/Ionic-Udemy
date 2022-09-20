@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { NavController } from '@ionic/angular';
+import { ActivatedRoute } from '@angular/router';
+import { ModalController, NavController } from '@ionic/angular';
+import { CreateBookingComponent } from '../../../bookings/create-booking/create-booking.component';
+import { Place } from '../../place.model';
+import { PlacesService } from '../../places.service';
 
 @Component({
   selector: 'app-place-detail',
@@ -8,17 +11,41 @@ import { NavController } from '@ionic/angular';
   styleUrls: ['./place-detail.page.scss'],
 })
 export class PlaceDetailPage implements OnInit {
-  constructor(private router: Router, private navController: NavController) {}
+  place: Place;
 
-  ngOnInit() {}
+  constructor(
+    private navController: NavController,
+    private placesService: PlacesService,
+    private activatedRoute: ActivatedRoute,
+    private modalController: ModalController
+  ) {}
+
+  ngOnInit() {
+    this.activatedRoute.params.subscribe((params) => {
+      if (!params.placeId) {
+        this.navController.navigateBack('/places/tabs/discover');
+      }
+      this.place = this.placesService.getPlace(params.placeId);
+    });
+  }
 
   onBookPlace() {
-    // this.router.navigateByUrl('/places/tabs/discover');
-    // navigateBack takes either array of path segments or just the url
-    this.navController.navigateBack('/places/tabs/discover');
+    // this.navController.navigateBack('/places/tabs/discover');
+    this.modalController
+      .create({
+        component: CreateBookingComponent,
+        componentProps: { selectedPlace: this.place },
+      })
+      .then((modalElement) => {
+        modalElement.present();
+        return modalElement.onDidDismiss();
+      })
+      .then((resultData) => {
+        console.log(resultData.data, resultData.role);
 
-    // another way of navigating back - use pop() - it will pop the last page off the stack
-    // the problem is it won't work if the stack of pages is empty
-    // this.navController.pop();
+        if (resultData.role === 'confirm') {
+          console.log('BOOKED');
+        }
+      });
   }
 }
