@@ -1202,7 +1202,7 @@ Debugging (android):
 
 1. <a href="#i0700">Introduction</a>
 2. <a href="#i0701">How Routing Work In An Ionic + Angular App</a>
-3. <a href="#i0702">zIonic Page Caching & Extra Lifecycle Hookszz</a>
+3. <a href="#i0702">Ionic Page Caching & Extra Lifecycle Hookszz</a>
 4. <a href="#i0703">Planning the Course Project</a>
 5. <a href="#i0704">Creating Our App Pages</a>
 6. <a href="#i0705">Adding Tabs to the App</a>
