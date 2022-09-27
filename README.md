@@ -16,6 +16,14 @@
 
 ### <a href="#t04">**Section 04: Angular + Ionic**</a>
 
+### <a href="#t05">**Section 05: Building Native Apps with Capacitor**</a>
+
+### <a href="#t06">**Section 06: Debugging**</a>
+
+### <a href="#t07">**Section 07: Navigation & Routing in Ionic Apps**</a>
+
+### <a href="#t08">**Section 08: Ionic Components Overview**</a>
+
 </nav>
 
 <br><br>
@@ -1845,6 +1853,592 @@ export class PlaceDetailPage implements OnInit {
 <br>
 
 - Angular + Ionic Navigation Docs: https://ionicframework.com/docs/navigation/angular
+
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 08: Ionic Components Overview** <a href="#navi">&#8593;</a> <span id="t08"></span>
+
+<br><br>
+
+1. <a href="#i0800">Introduction</a>
+2. <a href="#i0801">Attributes & Slots</a>
+3. <a href="#i0802">Ionic Grid Basics</a>
+4. <a href="#i0803">Controlling Grid Column Sizes</a>
+5. <a href="#i0804">Controlling Grid Alignment</a>
+6. <a href="#i0805">Responsive Grid Sizing</a>
+7. <a href="#i0806">Grid Summary</a>
+8. <a href="#i0807">ion-list vs ion-grid</a>
+9. <a href="#i0808">ion-label & ion-item</a>
+10. <a href="#i0809">ion-text</a>
+11. <a href="#i0810">Swipeable List Items</a>
+12. <a href="#i0811">Swipeable Bookings</a>
+13. <a href="#i0812">Understanding Virtual Scrolling</a>
+14. <a href="#i0813">Implementing Virtual Scrolling</a>
+15. <a href="#i0814">Virtual Scrolling Bugs</a>
+16. <a href="#i0815">Adding Image Elements</a>
+17. <a href="#i0816">Segmented Buttons</a>
+18. <a href="#i0817">Adding a Spinner</a>
+19. <a href="#i0818">Using the ActionSheet Controller</a>
+
+<br><br>
+
+### **Introduction** <span id="i0800"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+In this module:
+
+- Understanding Attributes & Slots
+- The Grid Layout
+- `<ion-list>`, `<ion-item>`, etc
+- More Components
+- "Controlller" Components
+
+<br><br>
+
+### **Attributes & Slots** <span id="i0801"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+- slot allows you to define a place in your web component where external content can be rendered in:
+  - slot="start" - render content at the left (start) of the component
+  - (null - default)
+  - slot="end" - render content at the right (end) of the component
+
+<br><br>
+
+### **Ionic Grid Basics** <span id="i0802"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+<img src="./img/ionic-grid-layout.png" alt="ionic-grid-layout">
+
+<br>
+
+Remove padding (class): `ion-no-padding`
+
+<br>
+
+By default if you add one column it will take the full width.
+
+<br><br>
+
+### **Controlling Grid Column Sizes** <span id="i0803"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+- offset="4" - "push" by 4
+
+```html
+<ion-grid>
+  <ion-row>
+    <ion-col size="4" offset="4">Row 1 Col 1</ion-col>
+    <ion-col size="4">Row 1 Col 2</ion-col>
+  </ion-row>
+</ion-grid>
+```
+
+<br>
+
+- "push" by 2 - in this case - center:
+
+<br>
+
+```html
+<ion-grid>
+  <ion-row>
+    <ion-col size="4" offset="2">Row 1 Col 1</ion-col>
+    <ion-col size="4">Row 1 Col 2</ion-col>
+  </ion-row>
+</ion-grid>
+```
+
+<br><br>
+
+### **Controlling Grid Alignment** <span id="i0804"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+by default row is as high as its tallest child
+
+<br>
+
+https://ionicframework.com/docs/layout/grid
+
+https://ionicframework.com/docs/api/grid
+
+<br>
+
+Vertical Positioning (align-items):
+
+- default: `ion-align-items-stretch`
+- `ion-align-items-start` - each item's height will be set according to its content, and also align the items at the start (top) - just like flex's `align-items="start"`
+- `ion-align-items-end` - does the same thing except items will be placed in the "end" - just like flex's `align-items="end"`
+- `ion-align-items-center` - does the same thing AND centers the items vertically
+
+<br>
+
+Horizontal positioning (justify-content):
+
+- `ion-justify-content-start` - align items horizontally to the left
+- `ion-justify-content-end` - align items horizontally to the right
+- `ion-justify-content-center` - center items horizontally
+
+<br><br>
+
+### **Responsive Grid Sizing** <span id="i0805"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+Default breakpoints: https://ionicframework.com/docs/layout/grid#default-breakpoints
+
+<br>
+
+E.g.:
+
+- size-sm="value"
+- offset-sm="value"
+  - value: 1-12
+
+<br><br>
+
+### **Grid Summary** <span id="i0806"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+Using fixed pixel width instead of the full width:
+
+By default the grid will take the full width of the screen, with `fixed` attribute it takes breakpoints into account.
+
+<br>
+
+`<ion-grid fixed>...</ion-grid>`
+
+<br>
+
+it can be useful if at some breakpoint you don't want it to take the full width...
+
+<br><br>
+
+### **ion-list vs ion-grid** <span id="i0807"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+- `ion-list`
+  - used to render `ion-item`s vertically
+  - use when you want to structure content from top to bottom, and you don't need specific control across its width
+  - should ONLY contain `ion-item`s
+  - used for scrollable, vertical list content
+  - you can wrap `ion-list` with `ion-grid` (col)
+- `ion-grid`
+  - renders ANY content inside of `ion-col`s
+  - ion-grid>ion-row>ion-col\*(1-12)
+  - ion-col can contain any other content you need - div/p/h1, ion-list, any other component or element
+
+<br>
+
+Summary:
+
+- Use Grid to render more complex structure - where you need to control width/height, breakpoints, alignment
+- Use List to render items vertically - from top to bottom
+  - set width either via CSS or by wrapping it into grid
+    - (ion-grid>ion-row>ion-col>ion-list>ion-item>...)
+
+<br><br>
+
+### **ion-label & ion-item** <span id="i0808"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+Note: Remember that in an `ion-list` you should ONLY have `ion-item`s. Of course you can use `ion-item`s outside of `ion-list`.
+
+<br>
+
+- `ion-label` - you use it typically inside of `ion-item`s to wrap any text-related content
+
+Example:
+
+```html
+<ion-list>
+  <ion-item>
+    <ion-label position="floating">E-Mail</ion-label>
+    <ion-input></ion-input>
+  </ion-item>
+</ion-list>
+```
+
+- `ion-item` - is a nice wrapper for any content inside of an `ion-list`, it is recommended to use it with ion-label and ion-input since it provides a special behavior (styling).
+
+<br>
+
+Summary:
+
+<br>
+
+<img src="./img/ion-item.png" alt="ion-item">
+
+<br>
+
+<img src="./img/ion-label.png" alt="ion-label">
+
+<br><br>
+
+### **ion-text** <span id="i0809"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+```html
+<p>
+  <ion-text color="danger"> {{ loadedPlaces[0].description }} </ion-text>
+</p>
+```
+
+You usually use `ion-text` when you want to just style some text - for example change the color.
+
+If you want to have multiple text elements (h1, p, etc) in an `ion-item` - use `ion-label`
+
+<br><br>
+
+### **Swipeable List Items** <span id="i0810"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+ion-divider and ion-group are components used to split your list into multiple sections:
+
+- https://ionicframework.com/docs/api/item-group
+- https://ionicframework.com/docs/api/item-divider
+
+<br>
+
+Sliding ion-items:
+
+https://ionicframework.com/docs/api/item-sliding
+
+<br>
+
+- `ion-item-sliding` - used to wrap the `ion-item`
+- `ion-item-options` - placed inside of `ion-item-sliding`, next to `ion-item`
+  - `ion-item-option` - option of a slided item
+    - `color` attribute - set the color of the button (of the slided item)
+    - `side="start"` - slide from left to right
+    - `side="end"` - default - slide from right to left
+
+<br><br>
+
+### **Swipeable Bookings** <span id="i0811"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+```html
+<ion-grid>
+  <ion-row>
+    <ion-col size-md="6" offset-md="3">
+      <ion-list>
+        <ion-item-sliding
+          *ngFor="let booking of loadedBookings"
+          #slidingBooking
+        >
+          <ion-item>
+            <ion-label>
+              <h5>{{ booking.placeTitle }}</h5>
+              <p>Guests: {{ booking.guestNumber }}</p>
+            </ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option
+              color="danger"
+              (click)="onCancelBooking(booking.id, slidingBooking)"
+            >
+              <ion-icon name="trash" slot="icon-only"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      </ion-list>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+```
+
+```ts
+onCancelBooking(offerId: string, slidingEl: IonItemSliding) {
+  slidingEl.close();
+}
+```
+
+<br><br>
+
+### **Understanding Virtual Scrolling** <span id="i0812"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+https://ionicframework.com/docs/api/virtual-scroll
+
+<br>
+
+What is Virtual Scrolling?
+
+- list items that are not visible in viewport (at the moment)
+- virtual scrolling - you don't render items that are far away from being visible (3-4 items away from your viewport)
+  - certain items are pre-rendered (close to your viewport)
+- whenever you scroll, items that are not visible are removed, and items that are visible are added (in advance)
+- rendered items are re-used (which are just having with different content)
+
+<br>
+
+Overall it's a performance optimization - which can be a disadvantage if you use it in a short list. Use it only for big lists (e.g. 30/50+ items).
+
+<br>
+
+<img src="./img/ion-virtual-scroll.png" alt="virtual scrolling">
+
+<br><br>
+
+### **Implementing Virtual Scrolling** <span id="i0813"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+- to use virtual scrolling you replace `ion-list` with `ion-virtual-scroll`.
+- instead of \*ngFor you use define `[items]` property
+  - the `[items]` property takes an array which you want to render
+    - e.g.: `[items]="loadedPlaces.slice(1)"`
+  - on `ion-item` you use `*virualItem` which works similar to `*ngFor`
+    - e.g.: `*virtualItem="let loadedPlace"`
+- you should always provide approximate item height (so the pre-rendering works properly):
+  - `approxItemHeight="70px"`
+
+<br>
+
+```html
+<ion-row>
+  <ion-col size="12" sizeSm="8" offsetSm="2" class="ion-text-center">
+    <ion-virtual-scroll [items]="listedLoadedPlaces" approxItemHeight="70px">
+      <ion-item
+        [routerLink]="['/', 'places', 'tabs', 'discover', loadedPlace.id]"
+        detail
+        *virtualItem="let loadedPlace"
+      >
+        <ion-thumbnail slot="start">
+          <ion-img [src]="loadedPlace.imageUrl"></ion-img>
+        </ion-thumbnail>
+        <ion-label>
+          <h2>{{ loadedPlace.title }}</h2>
+          <p>{{ loadedPlace.description }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-virtual-scroll>
+  </ion-col>
+</ion-row>
+```
+
+<br><br>
+
+### **Virtual Scrolling Bugs** <span id="i0814"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+Virtual scrolling is quite a complex technique behind the scenes and hence the component unfortunately can behave buggy.
+
+At the point of time I recorded the course, more than 3 items weren't rendered correctly for example.
+
+By using an `<ion-list>` (as we did before) instead of `<ion-virtual-scroll>` you can get rid of any bugs you might be facing - of course you lose the virtual scrolling functionality and might have to work around performance issues with other means (e.g. by loading less data).
+
+<br><br>
+
+### **Adding Image Elements** <span id="i0815"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+Note: always use `ion-img`.
+
+<br>
+
+- `ion-img` - img tag with extra optimizations
+  - if you have items with images inside of `ion-virtual-scroll` you should ALWAYS use `ion-img`
+    - thanks to that images will be loaded in advance
+- `ion-img` loads images lazily (only when visible)
+
+<br>
+
+- `ion-thumbnail` & `ion-avatar`
+  - these are simply wrappers around `ion-img`
+    - `ion-thumbnail` renders square image
+    - `ion-avatar` renders rounded image
+- into `ion-thumbnail` or `ion-avatar` you don't have to pass an `ion-img`
+
+```html
+<ion-thumbnail slot="">
+  <ion-img src=""></ion-img>
+</ion-thumbnail>
+
+<ion-avatar slot="">
+  <ion-img src=""></ion-img>
+</ion-thumbnail>
+```
+
+<br><br>
+
+### **Segmented Buttons** <span id="i0816"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+https://ionicframework.com/docs/api/segment
+
+<br>
+
+- `ion-segment` - allows you to add "segmented buttons" - buttons where only 1 button of the set of buttons can be active at a time
+  - `value=""` - set which button should be checked initially
+- `ion-segment-button` - segment buttons, use like normal buttons
+  - `value=""` - it is basically an identifier (e.g. you pass it to event)
+
+<br>
+
+- `(ion-change)` - Ionic event emitted whenever a new selection is made
+
+<br>
+
+```html
+<ion-segment value="all" (ionChange)="onFilterUpdate($event)">
+  <ion-segment-button value="all">All Places</ion-segment-button>
+  <ion-segment-button value="bookable">Bookable Places</ion-segment-button>
+</ion-segment>
+```
+
+```ts
+onFilterUpdate(event: Event) {
+  console.log((event as CustomEvent<SegmentChangeEventDetail>).detail.value);
+}
+```
+
+<br><br>
+
+### **Adding a Spinner** <span id="i0817"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+https://ionicframework.com/docs/api/spinner
+
+<br>
+
+#### Basic spinner:
+
+```html
+<div class="ion-text-center">
+  <ion-spinner color="primary" *ngIf="isLoading"></ion-spinner>
+</div>
+```
+
+#### Using the Loading Controller (spinner):
+
+https://ionicframework.com/docs/api/loading
+
+```html
+<ion-button color="primary" (click)="onLogin()"> Login </ion-button>
+```
+
+```ts
+onLogin() {
+  this.isLoading = true;
+  this.authService.login();
+  this.loadingController
+    .create({
+      keyboardClose: true,
+      spinner: 'bubbles',
+      message: 'Logging in...',
+    })
+    .then((loadingEl) => {
+      loadingEl.present();
+      setTimeout(() => {
+        loadingEl.dismiss();
+        this.router.navigate(['/places/tabs/discover']);
+        this.isLoading = false;
+      }, 1500);
+    });
+}
+```
+
+Note: Use async await instead of `.then()`s
+
+<br><br>
+
+### **Using the ActionSheet Controller** <span id="i0818"></span><a href="#t08">&#8593;</a>
+
+<br>
+
+ActionSheet - a set of options that slides up from the bottom of the page.
+
+<br>
+
+https://ionicframework.com/docs/api/action-sheet
+
+<br>
+
+- buttons:
+  - text: '' - text to be displayed
+  - role: 'cancel' - will not color it to red, but it will be always the bottommost button
+  - role: 'destructive' will set the color of the button to red
+  - handler: ... - the code to be executed (e.g. a method)
+
+<br>
+
+```ts
+onBookPlace() {
+  // this.navController.navigateBack('/places/tabs/discover');
+  this.actionSheetController
+    .create({
+      header: 'Choose an Action',
+      buttons: [
+        {
+          text: 'Select Date',
+        },
+        {
+          text: 'Random Date',
+          handler: () => {
+            this.openBookingModal('select');
+          },
+        },
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => {
+            this.openBookingModal('random');
+          },
+        },
+      ],
+    })
+    .then((actionSheetEl) => {
+      actionSheetEl.present();
+    });
+}
+
+openBookingModal(mode: 'select' | 'random') {
+  console.log(mode);
+
+  this.modalController
+    .create({
+      component: CreateBookingComponent,
+      componentProps: { selectedPlace: this.place },
+    })
+    .then((modalElement) => {
+      modalElement.present();
+      return modalElement.onDidDismiss();
+    })
+    .then((resultData) => {
+      console.log(resultData.data, resultData.role);
+
+      if (resultData.role === 'confirm') {
+        console.log('BOOKED');
+      }
+    });
+}
+```
+
+<br>
+
+Check other Ionic Controllers like for example ion-toast: https://ionicframework.com/docs/api/toast
 
 <br><br>
 
