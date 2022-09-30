@@ -1975,7 +1975,6 @@ https://ionicframework.com/docs/api/grid
 
 Vertical Positioning (align-items):
 
-- default: `ion-align-items-stretch`
 - `ion-align-items-start` - each item's height will be set according to its content, and also align the items at the start (top) - just like flex's `align-items="start"`
 - `ion-align-items-end` - does the same thing except items will be placed in the "end" - just like flex's `align-items="end"`
 - `ion-align-items-center` - does the same thing AND centers the items vertically
@@ -2071,7 +2070,7 @@ Example:
 </ion-list>
 ```
 
-- `ion-item` - is a nice wrapper for any content inside of an `ion-list`, it is recommended to use it with ion-label and ion-input since it provides a special behavior (styling).
+- `ion-item` - is a nice wrapper for any content inside of an `ion-list`, it is usually used to wrap ion-label and ion-input to apply special styling.
 
 <br>
 
