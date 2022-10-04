@@ -24,6 +24,8 @@
 
 ### <a href="#t08">**Section 08: Ionic Components Overview**</a>
 
+### <a href="#t09">**Section 09: Styling & Theming Ionic Apps**</a>
+
 </nav>
 
 <br><br>
@@ -2438,6 +2440,235 @@ openBookingModal(mode: 'select' | 'random') {
 <br>
 
 Check other Ionic Controllers like for example ion-toast: https://ionicframework.com/docs/api/toast
+
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 09: Styling & Theming Ionic Apps** <a href="#navi">&#8593;</a> <span id="t09"></span>
+
+<br><br>
+
+1. <a href="#i0900">Introduction</a>
+2. <a href="#i0901">How Styling & Theming Works in Ionic Apps</a>
+3. <a href="#i0902">Docs & Utility Attributes</a>
+4. <a href="#i0903">Setting Global Theme Variables</a>
+5. <a href="#i0904">Setting Global Styles</a>
+6. <a href="#i0905">Setting All Colors at Once</a>
+7. <a href="#i0906">Setting Platform-Specific Styles</a>
+8. <a href="#i0907">Styling Core Components with Variables</a>
+9. <a href="#i0908">Adding Custom CSS Rules</a>
+10. <a href="#i0909">Component-specific CSS Variables</a>
+11. <a href="#i0910">Useful Resources & Links</a>
+
+<br><br>
+
+### **Introduction** <span id="i0900"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+In this module:
+
+- Ionic Styling Overview (tools)
+- Setting & Using a Theme (colors, font, etc)
+- CSS Variables
+- Custom CSS Styles (SASS)
+
+<br><br>
+
+### **How Styling & Theming Works in Ionic Apps** <span id="i0901"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+CSS Variables - variables you define in CSS where you store values (e.g. color, padding, etc), then you assign that CSS variable as a value to your normal CSS properties
+
+<img src="./img/styling-theming-ionic.png" alt="">
+
+<br><br>
+
+### **Docs & Utility Attributes** <span id="i0902"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+CSS Utilites - text alignment, text transformation, element floating, padding/margin, flex, etc:
+
+- https://ionicframework.com/docs/layout/css-utilities
+
+<br><br>
+
+### **Setting Global Theme Variables** <span id="i0903"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+https://ionicframework.com/docs/theming
+
+<br>
+
+Global Theme Variables: `variables.scss`
+
+Global Theme Variables (docs): https://ionicframework.com/docs/theming/advanced#global-variables
+
+variables.css should be only used for variables
+
+<br><br>
+
+### **Setting Global Styles** <span id="i0904"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+If you have any global styling you want to get up, you should use the `global.scss` file: e.g. `body {margin: 20px }` - here you set specific CSS property.
+
+<br><br>
+
+### **Setting All Colors at Once** <span id="i0905"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+Here you can generate all (9 main) colors: https://ionicframework.com/docs/theming/color-generator
+
+After that you copy & paste generated CSS variables
+
+Note: Replace only (primary/secondary/teritary/success/warning/danger)
+
+<br><br>
+
+### **Setting Platform-Specific Styles** <span id="i0906"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+styling `mode="md"` or `mode="ios"` in any component OR `variables.scss`:
+
+- `:root {}` - styles for the entire app - both platforms
+- `.ios body {}` - ios
+- `.md body {}` - material design (android)
+
+<br><br>
+
+### **Styling Core Components with Variables** <span id="i0907"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+**Note**: Use developer tools, and see how the elements are styled, so for example it will help greatly when changing themes (dark/light).
+
+<br>
+
+Theming toolbar: https://ionicframework.com/docs/api/toolbar#theming
+
+<br>
+
+```html
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Authenticate</ion-title>
+  </ion-toolbar>
+</ion-header>
+```
+
+Manually adding that color prop to every toolbar is pretty cumbersome, there is an easier way: setting themes & application colors:
+
+- https://ionicframework.com/docs/theming/themes (!!)
+
+<br>
+
+```scss
+--ion-toolbar-background: var(--ion-color-primary);
+--ion-toolbar-color: var(--ion-color-primary-contrast);
+```
+
+`var()` function takes 2 arguments - values, the 2nd argument is a fallback value in case 1st argument is broken.
+
+- you can also apply themes on component level with `color="value"`
+
+<br><br>
+
+### **Adding Custom CSS Rules** <span id="i0908"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+```html
+<ion-item detail>
+  <ion-thumbnail slot="start">
+    <ion-img [src]="offer.imageUrl"></ion-img>
+  </ion-thumbnail>
+  <ion-label>
+    <h1>{{ offer.title }}</h1>
+    <div class="offer-details">
+      <ion-icon name="calendar-outline" color="primary"></ion-icon>
+      <ion-text color="tertiary" class="space-left">
+        {{ getDummyDate() | date }}
+      </ion-text>
+      <span class="space-left"> to </span>
+      <ion-icon name="calendar-outline" color="primary"></ion-icon>
+      <ion-text color="tertiary" class="space-left">
+        {{ getDummyDate() | date }}
+      </ion-text>
+    </div>
+  </ion-label>
+</ion-item>
+```
+
+```scss
+h1 {
+  font-size: 18px;
+  border: 1px solid var(--ion-color-primary);
+  padding: 8px;
+  color: var(--ion-color-primary);
+}
+
+.offer-details {
+  display: flex;
+  align-items: center;
+}
+
+.space-left {
+  margin: 5px;
+}
+```
+
+<br><br>
+
+### **Component-specific CSS Variables** <span id="i0909"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+Docs: Ionic -> Components -> For each component you can find any settable CSS properties for that specific component, if there are any.
+
+For example ion-button component: https://ionicframework.com/docs/api/button#css-custom-properties-1
+
+<br>
+
+You also can set/generate stepped colors for each component (if exists): https://ionicframework.com/docs/theming/themes#stepped-colors
+
+<br>
+
+`variables.scss` (or in a specific component)
+
+```scss
+ion-button {
+  --background: #0000ff;
+  --box-shadow: 2px 2px 20px rgba(0, 0, 0, 0.6);
+}
+```
+
+<br><br>
+
+### **Useful Resources & Links** <span id="i0910"></span><a href="#t09">&#8593;</a>
+
+<br>
+
+- Styling & Theming Basics Docs: https://ionicframework.com/docs/theming/basics
+
+- Themes & Application Colors: https://ionicframework.com/docs/theming/themes
+
+- More on the CSS Variables: https://ionicframework.com/docs/theming/css-variables
+
+- The Color Generator: https://ionicframework.com/docs/theming/color-generator
+
+- Dive deeper into Theming: https://ionicframework.com/docs/theming/advanced
+
+- More CSS Resources: https://academind.com/learn/css/
 
 <br><br>
 
