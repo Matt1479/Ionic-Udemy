@@ -26,6 +26,8 @@
 
 ### <a href="#t09">**Section 09: Styling & Theming Ionic Apps**</a>
 
+### <a href="#t10">**Section 10: Handling User Input**</a>
+
 </nav>
 
 <br><br>
@@ -2677,3 +2679,553 @@ ion-button {
 <br><br>
 
 <hr>
+
+<br><br>
+
+## **Section 10: Handling User Input** <a href="#navi">&#8593;</a> <span id="t10"></span>
+
+<br><br>
+
+1. <a href="#i1000">Introduction</a>
+2. <a href="#i1001">Setting Up a Form Template</a>
+3. <a href="#i1002">zzz</a>
+4. <a href="#i1003">zzz</a>
+5. <a href="#i1004">zzz</a>
+6. <a href="#i1005">zzz</a>
+7. <a href="#i1006">zzz</a>
+8. <a href="#i1007">zzz</a>
+9. <a href="#i1008">zzz</a>
+10. <a href="#i1009">zzz</a>
+11. <a href="#i1010">zzz</a>
+
+<br><br>
+
+### **Introduction** <span id="i1000"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+In this module:
+
+- Ionic Form Controls (text inputs, date-time selectors)
+- Template-driven & Reactive Forms (using Ionic Form Controls in the context of Angular Forms)
+- Validation
+
+<br><br>
+
+### **Setting Up a Form Template** <span id="i1001"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+- `expand` attribute:
+  - `expand="block"` - adds `display: block;` to an element (button), and makes it rounded
+  - `expand="full"` - adds `display: block;`, and expands it to full width (plus it makes it squared)
+  - `expand="solid"` - default
+- fill attr:
+  - `fill="outline"` - removes the background color, but leaves the border (outline)
+
+<br>
+
+More about styling buttons here:
+
+https://ionicframework.com/docs/api/button#expand
+
+<br>
+
+```html
+<ion-button color="primary" fill="clear" expand="block">
+  Switch to Login
+</ion-button>
+<ion-button (click)="onLogin()" expand="block"> Login </ion-button>
+```
+
+<br><br>
+
+### **Adding a Template-driven Form** <span id="i1002"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+```html
+<form #f="ngForm" (ngSubmit)="onSubmit(f)">
+  <ion-grid>
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-list>
+          <ion-item>
+            <ion-label position="floating">E-Mail</ion-label>
+            <ion-input
+              type="email"
+              ngModel
+              name="email"
+              required
+              email
+            ></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="floating">Password</ion-label>
+            <ion-input
+              type="password"
+              ngModel
+              name="password"
+              required
+              minlength="6"
+            ></ion-input>
+          </ion-item>
+        </ion-list>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-button color="primary" fill="clear" expand="block" type="button">
+          Switch to Login
+        </ion-button>
+        <ion-button (click)="onLogin()" expand="block" type="submit">
+          Login
+        </ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</form>
+```
+
+Notes - reminder:
+
+- in template-driven approach you add a local reference to from element, then you pass it to (ngSubmit)="onSubmit(form)"
+- you add ngModel and name="ctrlName" attributes to input element
+- you add type="submit" to a button that submits the form OR type="button" to a button that does not submit the form
+
+<br><br>
+
+### **Handling Validation** <span id="i1003"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+Apply x styles to an element which parent has those classes:
+
+```scss
+.ion-invalid.ion-touched ion-label {
+  color: var(--ion-color-danger) !important;
+}
+```
+
+The visual representation:
+
+```html
+<element class="ion-invalid ion-touched">
+  …
+  <ion-label></ion-label>
+</element>
+```
+
+<br>
+
+Email validation:
+
+```html
+<ion-item>
+  <ion-label position="floating">E-Mail</ion-label>
+  <ion-input
+    type="email"
+    ngModel
+    name="email"
+    required
+    email
+    #emailCtrl="ngModel"
+  ></ion-input>
+</ion-item>
+<ion-item
+  *ngIf="!emailCtrl.valid && (emailCtrl.touched || emailCtrl.dirty)"
+  lines="none"
+>
+  <ion-label>Should be a valid email address.</ion-label>
+</ion-item>
+```
+
+Password validation:
+
+```html
+<ion-item>
+  <ion-label position="floating">Password</ion-label>
+  <ion-input
+    type="password"
+    ngModel
+    name="password"
+    required
+    minlength="6"
+    #passwordCtrl="ngModel"
+  ></ion-input>
+</ion-item>
+<ion-item
+  *ngIf="!passwordCtrl.valid && (passwordCtrl.touched || passwordCtrl.dirty)"
+  lines="none"
+>
+  <ion-label>Should at least be 6 characters long.</ion-label>
+</ion-item>
+```
+
+Submit button:
+
+```html
+<ion-button
+  (click)="onLogin()"
+  expand="block"
+  type="submit"
+  [disabled]="!f.valid"
+>
+  Login
+</ion-button>
+```
+
+<br><br>
+
+### **Switching Between Auth Modes** <span id="i1004"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+Normally you should use two different components for logging in or signing up.
+
+<br><br>
+
+### **Finishing the Auth Form** <span id="i1005"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+```ts
+  onSwitchAuthMode() {
+    this.isLogin = !this.isLogin;
+  }
+
+  onSubmit(form: NgForm) {
+    if (!form.valid) {
+      return;
+    }
+
+    const email = form.value.email;
+    const password = form.value.password;
+    console.log(email, password);
+
+    if (this.isLogin) {
+      // Send a request to login servers
+    } else {
+      // Send a request to signup servers
+    }
+  }
+```
+
+<br><br>
+
+### **Starting Work on a New Offer Form** <span id="i1006"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+- https://ionicframework.com/docs/api/searchbar#autocomplete
+- https://ionicframework.com/docs/api/searchbar#autocorrect
+- https://ionicframework.com/docs/api/textarea
+
+<br>
+
+```html
+<ion-grid>
+  <ion-row>
+    <ion-col size-sm="6" offset-sm="3">
+      <ion-item>
+        <ion-label position="floating">Title</ion-label>
+        <ion-input type="text" autocomplete="on" autocorrect="on"></ion-input>
+      </ion-item>
+    </ion-col>
+  </ion-row>
+  <ion-row>
+    <ion-col size-sm="6" offset-sm="3">
+      <ion-item>
+        <ion-label position="floating">Short description</ion-label>
+        <ion-textarea rows="3"></ion-textarea>
+      </ion-item>
+    </ion-col>
+  </ion-row>
+  <ion-row>
+    <ion-col size-sm="6" offset-sm="3">
+      <ion-item>
+        <ion-label position="floating">Price</ion-label>
+        <ion-input type="number"></ion-input>
+      </ion-item>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+```
+
+<br><br>
+
+### **Finishing the Offer Form Template** <span id="i1007"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+ion-datetime / ion-datetime-button:
+
+- https://ionicframework.com/docs/api/datetime
+- https://ionicframework.com/docs/api/datetime-button
+
+<br>
+
+Basic datetime picker:
+
+```html
+<ion-col size-sm="6" offset-sm="3">
+  <ion-item class="ion-text-center">
+    <ion-label>Pick a date</ion-label>
+  </ion-item>
+  <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+  <ion-modal [keepContentsMounted]="true">
+    <ng-template>
+      <ion-datetime
+        id="datePicker"
+        min="2022-01-01T00:00:00"
+        max="2025-12-31T23:59:59"
+      >
+      </ion-datetime>
+    </ng-template>
+  </ion-modal>
+</ion-col>
+```
+
+<br><br>
+
+### **Creating a Reactive Form** <span id="i1008"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+Note: import ReactiveFormsModule into a module that will use it
+
+<br>
+
+Using FormGroup:
+
+```ts
+ngOnInit() {
+  this.newOfferForm = new FormGroup({
+    title: new FormControl(null, {
+      updateOn: 'blur', // blur / change / submit
+      validators: [Validators.required],
+    }),
+    description: new FormControl(null, {
+      updateOn: 'blur',
+      validators: [Validators.required, Validators.maxLength(180)],
+    }),
+    price: new FormControl(null, {
+      updateOn: 'blur',
+      validators: [Validators.required, Validators.min(1)],
+    }),
+    dateFrom: new FormControl(null, {
+      updateOn: 'blur',
+      validators: [Validators.required],
+    }),
+    dateTo: new FormControl(null, {
+      updateOn: 'blur',
+      validators: [Validators.required],
+    }),
+  });
+}
+```
+
+<br>
+
+Using FormBuilder:
+
+```ts
+constructor(private formBuilder: FormBuilder) {}
+
+ngOnInit() {
+  this.newOfferForm = this.formBuilder.group({
+    title: [
+      '',
+      {
+        updateOn: 'blur', // blur / change / submit
+        validators: [Validators.required],
+      },
+    ],
+    description: [
+      '',
+      {
+        updateOn: 'blur',
+        validators: [Validators.required, Validators.maxLength(180)],
+      },
+    ],
+    price: [
+      '',
+      {
+        updateOn: 'blur',
+        validators: [Validators.required, Validators.min(1)],
+      },
+    ],
+    dateFrom: [
+      '',
+      {
+        updateOn: 'blur',
+        validators: [Validators.required],
+      },
+    ],
+    dateTo: [
+      '',
+      {
+        updateOn: 'blur',
+        validators: [Validators.required],
+      },
+    ],
+  });
+}
+```
+
+<br>
+
+`updateOn` property:
+
+- `blur` - update form on blur (when it loses focus)
+- `change` - update form on every change
+- `submit` - ... on submit
+
+<br><br>
+
+### **Syncing the Form to the Template** <span id="i1008"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+- `formControlName="ctrlName"`
+
+<br>
+
+```html
+<ion-buttons slot="primary">
+  <ion-button (click)="onCreateOffer()" type="submit">
+    <ion-icon name="checkmark" slot="icon-only"></ion-icon>
+  </ion-button>
+</ion-buttons>
+```
+
+```html
+<form [formGroup]="newOfferForm">
+  <!-- ... -->
+  <ion-input
+    type="text"
+    autocomplete="on"
+    autocorrect="on"
+    formControlName="title"
+  ></ion-input>
+  <!-- ... -->
+</form>
+```
+
+<br><br>
+
+### **Adding the Edit Offer Form** <span id="i1009"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+```html
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button
+        [defaultHref]="'/places/tabs/offers/' + place.id"
+      ></ion-back-button>
+    </ion-buttons>
+    <ion-title>Edit {{ place.title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button [disabled]="!editOfferForm.valid" (click)="onUpdateOffer()">
+        <ion-icon name="checkmark" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="editOfferForm">
+    <ion-grid>
+      <ion-row>
+        <ion-col size-sm="6" offset-sm="3">
+          <ion-item>
+            <ion-label position="floating">Title</ion-label>
+            <ion-input type="text" formControlName="title"></ion-input>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col size-sm="6" offset-sm="3">
+          <ion-item>
+            <ion-label position="floating">Short description</ion-label>
+            <ion-textarea rows="3" formControlName="description"></ion-textarea>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </form>
+</ion-content>
+```
+
+```ts
+place: Place;
+editOfferForm: FormGroup;
+
+constructor(
+  private activatedRoute: ActivatedRoute,
+  private placesService: PlacesService,
+  private navController: NavController
+) {}
+
+ngOnInit() {
+  this.activatedRoute.params.subscribe((params) => {
+    if (!params.placeId) {
+      this.navController.navigateBack('/places/tabs/offers');
+    }
+    this.place = this.placesService.getPlace(params.placeId);
+
+    this.editOfferForm = new FormGroup({
+      title: new FormControl(this.place.title, {
+        updateOn: 'blur',
+        validators: [Validators.required],
+      }),
+      description: new FormControl(this.place.description, {
+        updateOn: 'blur',
+        validators: [Validators.required],
+      }),
+    });
+  });
+}
+
+onUpdateOffer() {
+  if (!this.editOfferForm) {
+    return;
+  }
+  console.log(this.editOfferForm);
+}
+```
+
+<br><br>
+
+### **Starting with the Booking Form** <span id="i1010"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+- `ion-select`: https://ionicframework.com/docs/api/select
+
+<br>
+
+```html
+<ion-item>
+  <ion-label position="floating">Number of Guests</ion-label>
+  <ion-select [ngModel]="2" name="guest-number">
+    <ion-select-option value="1">1</ion-select-option>
+    <ion-select-option value="2">2</ion-select-option>
+    <ion-select-option value="3">3</ion-select-option>
+  </ion-select>
+</ion-item>
+```
+
+<br><br>
+
+### **Configuring the Date Controls** <span id="i1011"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+Updating ion-datetime to Ionic 6: https://ionicframework.com/docs/intro/upgrading-to-ionic-6#datetime
+
+<br>
+
+**TO FIX**
