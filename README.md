@@ -2572,6 +2572,10 @@ Manually adding that color prop to every toolbar is pretty cumbersome, there is 
 
 <br>
 
+Application Colors: https://ionicframework.com/docs/theming/themes#application-colors
+
+<br>
+
 ```scss
 --ion-toolbar-background: var(--ion-color-primary);
 --ion-toolbar-color: var(--ion-color-primary-contrast);
