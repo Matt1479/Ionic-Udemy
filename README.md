@@ -2688,15 +2688,17 @@ ion-button {
 
 1. <a href="#i1000">Introduction</a>
 2. <a href="#i1001">Setting Up a Form Template</a>
-3. <a href="#i1002">zzz</a>
-4. <a href="#i1003">zzz</a>
-5. <a href="#i1004">zzz</a>
-6. <a href="#i1005">zzz</a>
-7. <a href="#i1006">zzz</a>
-8. <a href="#i1007">zzz</a>
-9. <a href="#i1008">zzz</a>
-10. <a href="#i1009">zzz</a>
-11. <a href="#i1010">zzz</a>
+3. <a href="#i1002">Adding a Template-driven Form</a>
+4. <a href="#i1003">Handling Validation</a>
+5. <a href="#i1004">Switching Between Auth Modes</a>
+6. <a href="#i1005">Finishing the Auth Form</a>
+7. <a href="#i1006">Starting Work on a New Offer Form</a>
+8. <a href="#i1007">Finishing the Offer Form Template</a>
+9. <a href="#i1008">Creating a Reactive Form</a>
+10. <a href="#i1009">Adding the Edit Offer Form</a>
+11. <a href="#i1010">Starting with the Booking Form</a>
+12. <a href="#i1011">(Updated) ion-datetime, ion-datetime-button</a>
+13. <a href="#i1012">Wrap Up / Useful Links</a>
 
 <br><br>
 
@@ -3220,7 +3222,121 @@ onUpdateOffer() {
 
 <br><br>
 
-### **Configuring the Date Controls** <span id="i1011"></span><a href="#t10">&#8593;</a>
+### (Updated) ion-datetime, ion-datetime-button <span id="i1011"></span><a href="#t10">&#8593;</a>
+
+<br>
+
+```html
+<ion-header>
+  <ion-toolbar color="tertiary">
+    <ion-title> Date Time </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item>
+    <ion-label position="fixed">Date</ion-label>
+    <ion-datetime-button slot="end" datetime="date"></ion-datetime-button>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="fixed">Time</ion-label>
+    <ion-datetime-button slot="end" datetime="time"></ion-datetime-button>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="fixed">Month Year</ion-label>
+    <ion-datetime-button slot="end" datetime="monthYear"></ion-datetime-button>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="fixed" class="ion-text-wrap"
+      >Wheel Date-Time</ion-label
+    >
+    <ion-datetime-button
+      slot="end"
+      datetime="wheelDateTime"
+    ></ion-datetime-button>
+  </ion-item>
+
+  <ion-modal [keepContentsMounted]="true">
+    <ng-template>
+      <ion-datetime
+        locale="es-ES"
+        value="2022-04-21T00:00:00"
+        min="2022-03-01T00:00:00"
+        max="2022-05-31T23:59:59"
+        id="date"
+        presentation="date"
+        (ionChange)="onChange($event)"
+      ></ion-datetime>
+    </ng-template>
+  </ion-modal>
+
+  <ion-modal [keepContentsMounted]="true">
+    <ng-template>
+      <ion-datetime
+        id="time"
+        presentation="time"
+        (ionChange)="onChange($event)"
+      ></ion-datetime>
+    </ng-template>
+  </ion-modal>
+
+  <ion-modal [keepContentsMounted]="true">
+    <ng-template>
+      <ion-datetime
+        id="monthYear"
+        presentation="month-year"
+        (ionChange)="onChange($event)"
+      ></ion-datetime>
+    </ng-template>
+  </ion-modal>
+
+  <ion-modal [keepContentsMounted]="true">
+    <ng-template>
+      <ion-datetime
+        id="wheelDateTime"
+        presentation="date-time"
+        [preferWheel]="true"
+        (ionChange)="onChange($event)"
+        [showDefaultButtons]="true"
+        doneText="All Set"
+        cancelText="Nevermind"
+        #wheelDateTime
+      >
+        <ion-buttons slot="buttons">
+          <ion-button color="danger" (click)="wheelDateTime.reset()"
+            >Reset</ion-button
+          >
+          <ion-button color="primary" (click)="wheelDateTime.cancel(true)"
+            >Never mind</ion-button
+          >
+          <ion-button color="primary" (click)="wheelDateTime.confirm(true)"
+            >All Set</ion-button
+          >
+        </ion-buttons>
+      </ion-datetime>
+    </ng-template>
+  </ion-modal>
+
+  <ion-datetime
+    presentation="date"
+    [multiple]="true"
+    [value]="['2022-06-03', '2022-06-13', '2022-06-29']"
+    (ionChange)="onChange($event)"
+    color="success"
+    size="cover"
+    class="multi"
+  >
+    <span slot="title">Select Multiple Date</span>
+  </ion-datetime>
+</ion-content>
+```
+
+<br><br>
+
+### **Wrap Up / Useful Links** <span id="i1012"></span><a href="#t10">&#8593;</a>
 
 <br>
 
@@ -3228,4 +3344,15 @@ Updating ion-datetime to Ionic 6: https://ionicframework.com/docs/intro/upgradin
 
 <br>
 
-**TO FIX**
+#### Documentation
+
+<br>
+
+ion-datetime / ion-datetime-button:
+
+- https://ionicframework.com/docs/api/datetime
+- https://ionicframework.com/docs/api/datetime-button
+
+<br><br>
+
+<hr>
