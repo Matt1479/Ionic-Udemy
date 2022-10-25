@@ -28,6 +28,8 @@
 
 ### <a href="#t10">**Section 10: Handling User Input**</a>
 
+### <a href="#t11">**Section 11: Managing State**</a>
+
 </nav>
 
 <br><br>
@@ -3352,6 +3354,360 @@ ion-datetime / ion-datetime-button:
 
 - https://ionicframework.com/docs/api/datetime
 - https://ionicframework.com/docs/api/datetime-button
+
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 11: Managing State** <a href="#navi">&#8593;</a> <span id="t11"></span>
+
+<br><br>
+
+1. <a href="#i1100">Introduction</a>
+2. <a href="#i1101">What is State?</a>
+3. <a href="#i1102">Using RxJS Subjects for State Management / Passing Data via Subjects & Subscriptions</a>
+4. <a href="#i1103">UI State in Action & Updating Places</a>
+5. <a href="#i1104">UI State with Bookable Places</a>
+6. <a href="#i1105">Useful Resources & Links</a>
+
+<br><br>
+
+### **Introduction** <span id="i1100"></span><a href="#t11">&#8593;</a>
+
+<br>
+
+In this module:
+
+- What is State?
+- Saving User Input
+- Outputting State
+
+<br><br>
+
+### **What is State?** <span id="i1101"></span><a href="#t11">&#8593;</a>
+
+<br>
+
+- State:
+  - UI State: Managed inside of Components (e.g. isLoading)
+  - Temporary / Local State: Managed inside of Services (e.g. list of loaded events)
+  - Persistent State: Managed on Backend / Server, database (data: e.g. list of all events)
+
+<br><br>
+
+### **Using RxJS Subjects for State Management / Passing Data via Subjects & Subscriptions** <span id="i1102"></span><a href="#t11">&#8593;</a>
+
+<br>
+
+Note: keep Ionic's page caching in mind (ionView(Will/Did)(Enter/Leave)). You can use Subjects or other state management instead of that w/ Subscriptions (ngOnInit, ngOnDestroy).
+
+<br>
+
+PlacesService
+
+```ts
+import { Injectable } from "@angular/core";
+import { BehaviorSubject } from "rxjs";
+import { map, take } from "rxjs/operators";
+import { AuthService } from "../auth/auth.service";
+import { Place } from "./place.model";
+
+@Injectable({
+  providedIn: "root",
+})
+export class PlacesService {
+  private _places = new BehaviorSubject<Place[]>([
+    new Place(
+      "p1",
+      "Manhattan Mansion",
+      "In the heart of New York City.",
+      "https://lonelyplanetimages.imgix.net/mastheads/GettyImages-538096543_medium.jpg?sharp=10&vib=20&w=1200",
+      149.99,
+      new Date("2022-01-01"),
+      new Date("2022-12-31"),
+      "abc"
+    ),
+    new Place(
+      "p2",
+      // eslint-disable-next-line @typescript-eslint/quotes
+      "L'Amour Toujours",
+      "A romantic place in Paris.",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Paris_Night.jpg/1024px-Paris_Night.jpg",
+      189.99,
+      new Date("2022-01-01"),
+      new Date("2022-12-31"),
+      "abc"
+    ),
+    new Place(
+      "p3",
+      "The Foggy Palace",
+      "Not your average city trip!",
+      "https://upload.wikimedia.org/wikipedia/commons/0/01/San_Francisco_with_two_bridges_and_the_fog.jpg",
+      99.99,
+      new Date("2022-01-01"),
+      new Date("2022-12-31"),
+      "abc"
+    ),
+  ]);
+
+  constructor(private authService: AuthService) {}
+
+  get places() {
+    // eslint-disable-next-line no-underscore-dangle
+    return this._places.asObservable();
+  }
+
+  getPlace(id: string) {
+    return this.places.pipe(
+      take(1),
+      map((places: Place[]) => {
+        return { ...places.find((p) => p.id === id) };
+      })
+    );
+  }
+
+  addPlace(
+    title: string,
+    description: string,
+    price: number,
+    dateFrom: Date,
+    dateTo: Date
+  ) {
+    const newPlace = new Place(
+      Math.random().toString(),
+      title,
+      description,
+      "https://lonelyplanetimages.imgix.net/mastheads/GettyImages-538096543_medium.jpg?sharp=10&vib=20&w=1200",
+      price,
+      dateFrom,
+      dateTo,
+      this.authService.userId
+    );
+    // take(1) - get only current latest list of places, then complete
+    this._places.pipe(take(1)).subscribe((places: Place[]) => {
+      // concat - takes the old array, adds a new element, and returns a new array
+      // then we emit a new array with next
+      this._places.next(places.concat(newPlace));
+    });
+  }
+}
+```
+
+<br>
+
+OffersPage
+
+```ts
+  ngOnInit() {
+  // no take(1) here, because we also want to get future places here as well
+  this.placesService.places.subscribe((places: Place[]) => {
+    this.offers = places;
+  });
+}
+```
+
+<br><br>
+
+Managing subscriptions - reminder:
+
+```ts
+  subscription: Subscription;
+
+  constructor(private placesService: PlacesService) {}
+
+  ngOnInit() {
+    this.subscription = this.placesService.places.subscribe(
+      (observer) => {
+        this.offers = places;
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
+```
+
+<br><br>
+
+### **UI State in Action & Updating Places** <span id="i1103"></span><a href="#t11">&#8593;</a>
+
+<br>
+
+PlacesService
+
+```ts
+addPlace(
+  title: string,
+  description: string,
+  price: number,
+  dateFrom: Date,
+  dateTo: Date
+) {
+  const newPlace = new Place(
+    Math.random().toString(),
+    title,
+    description,
+    'https://lonelyplanetimages.imgix.net/mastheads/GettyImages-538096543_medium.jpg?sharp=10&vib=20&w=1200',
+    price,
+    dateFrom,
+    dateTo,
+    this.authService.userId
+  );
+  // take(1) - get only current latest list of places, then complete
+  return this._places.pipe(
+    take(1),
+    delay(1000),
+    tap((places: Place[]) => {
+      // concat - takes the old array, adds a new element, and returns a new array
+      // then we emit a new array with next
+      this._places.next(places.concat(newPlace));
+    })
+  );
+}
+```
+
+<br>
+
+NewOfferPage
+
+```ts
+onCreateOffer() {
+  if (!this.newOfferForm.valid) {
+    return;
+  }
+  this.loadingCtrl
+    .create({
+      message: 'creating place...',
+    })
+    .then((loadingEl) => {
+      loadingEl.present();
+      this.placesService
+        .addPlace(
+          this.newOfferForm.value.title,
+          this.newOfferForm.value.description,
+          +this.newOfferForm.value.price,
+          new Date(this.newOfferForm.value.dateFrom),
+          new Date(this.newOfferForm.value.dateTo)
+        )
+        .subscribe((places) => {
+          this.newOfferForm.reset();
+          this.router.navigate(['/places/tabs/offers']);
+          this.loadingCtrl.dismiss();
+        });
+    });
+}
+```
+
+<br>
+
+Updating logic:
+
+PlacesService
+
+```ts
+updatePlace(placeId: string, title: string, description: string) {
+  return this.places.pipe(
+    take(1),
+    delay(1000),
+    tap((places) => {
+      const updatedPlaceIndex = places.findIndex(
+        (place) => place.id === placeId
+      );
+      const updatedPlaces = [...places];
+      const oldPlace = updatedPlaces[updatedPlaceIndex];
+      updatedPlaces[updatedPlaceIndex] = new Place(
+        oldPlace.id,
+        title,
+        description,
+        oldPlace.imageUrl,
+        oldPlace.price,
+        oldPlace.availableFrom,
+        oldPlace.availableTo,
+        oldPlace.userId
+      );
+      this._places.next(updatedPlaces);
+    })
+  );
+}
+```
+
+<br>
+
+EditOfferPage
+
+```ts
+onUpdateOffer() {
+  if (!this.editOfferForm) {
+    return;
+  }
+  this.loadingCtrl
+    .create({
+      message: 'Updating place...',
+    })
+    .then((loadingEl) => {
+      loadingEl.present();
+      this.placesService
+        .updatePlace(
+          this.place.id,
+          this.editOfferForm.value.title,
+          this.editOfferForm.value.description
+        )
+        .subscribe(() => {
+          loadingEl.dismiss();
+          this.editOfferForm.reset();
+          this.router.navigate(['/places/tabs/offers']);
+        });
+    });
+}
+```
+
+<br><br>
+
+### **UI State with Bookable Places** <span id="i1104"></span><a href="#t11">&#8593;</a>
+
+<br>
+
+DiscoverPage
+
+```ts
+onFilterUpdate(event: Event) {
+  if (
+    (event as CustomEvent<SegmentChangeEventDetail>).detail.value === 'all'
+  ) {
+    this.relevantPlaces = this.loadedPlaces;
+    this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+  } else {
+    this.relevantPlaces = this.loadedPlaces.filter(
+      (place) => place.userId !== this.authService.userId
+    );
+    this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+  }
+}
+```
+
+```html
+<ion-grid>
+  <ion-row *ngIf="!relevantPlaces || relevantPlaces.length <= 0">
+    <ion-col size="12" sizeSm="8" offsetSm="2" class="ion-text-center">
+      <p>There are no bookable places right now, please come back later!</p>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+<ion-grid *ngIf="relevantPlaces.length > 0"> ... </ion-grid>
+```
+
+<br><br>
+
+### **Useful Resources & Links** <span id="i1105"></span><a href="#t11">&#8593;</a>
+
+<br>
+
+- How to pass data around in Angular: https://academind.com/learn/angular/angular-q-a/#how-can-you-pass-data-from-a-to-b-e-g-between-components
 
 <br><br>
 
