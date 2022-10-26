@@ -30,6 +30,8 @@
 
 ### <a href="#t11">**Section 11: Managing State**</a>
 
+### <a href="#t12">**Section 12: Sending Http Requests**</a>
+
 </nav>
 
 <br><br>
@@ -3708,6 +3710,576 @@ onFilterUpdate(event: Event) {
 <br>
 
 - How to pass data around in Angular: https://academind.com/learn/angular/angular-q-a/#how-can-you-pass-data-from-a-to-b-e-g-between-components
+
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 12: Sending Http Requests** <a href="#navi">&#8593;</a> <span id="t12"></span>
+
+<br><br>
+
+1. <a href="#i1200">Introduction</a>
+2. <a href="#i1201">How To Connect to a Backend</a>
+3. <a href="#i1202">Sending Data via Http / Using Response Data</a>
+4. <a href="#i1203">Fetching & Displaying Data</a>
+5. <a href="#i1204">Updating Places</a>
+6. <a href="#i1205">Fetching Data in Multiple Places</a>
+7. <a href="#i1206">Updating Places Correctly</a>
+8. <a href="#i1207">Error Handling</a>
+9. <a href="#i1208">Fetching Single Places</a>
+10. <a href="#i1209">Adding a Booking</a>
+11. <a href="#i1210">Fetching Bookings By User</a>
+12. <a href="#i1211">Deleting Bookings</a>
+
+<br><br>
+
+### **Introduction** <span id="i1200"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+In this module:
+
+- How to Connect to Backends
+- Storing & Fetching Data
+
+<br><br>
+
+### **How To Connect to a Backend** <span id="i1201"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+<img src="./img/ionic-angular-backend.png" alt="backend">
+
+<br><br>
+
+### **Sending Data via Http / Using Response Data** <span id="i1202"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+```ts
+return this.http
+  .post<{ name: string }>(environment.firebaseAPIUrl + "offered-places.json", {
+    ...newPlace,
+    id: null,
+  })
+  .pipe(
+    // switchMap takes the existing Observable chain
+    // and result of that chain (resData)
+    // then it returns a new Observable that replaces the old Observable
+    switchMap((resData) => {
+      // get the id from firebase
+      generatedId = resData.name;
+      return this.places;
+    }),
+    // take(1) place
+    take(1),
+    tap((places) => {
+      // we're working with places array because of to switchMap
+      newPlace.id = generatedId;
+      this._places.next(places.concat(newPlace));
+    })
+  );
+```
+
+<br><br>
+
+### **Fetching & Displaying Data** <span id="i1203"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+```ts
+fetchPlaces() {
+  return (
+    this.http
+      // [key: string]: PlaceData
+      // any key which is a string which value is of type PlaceData
+      .get<{ [key: string]: PlaceData }>(
+        environment.firebaseAPIUrl + 'offered-places.json'
+      )
+      .pipe(
+        // map - get the response data and return new modified data
+        // difference to switchMap - map returns a non-Observable data
+        // switchMap returns an Observable
+        map((resData) => {
+          const places = [];
+          // loop through all the keys...
+          for (const key in resData) {
+            if (resData.hasOwnProperty(key)) {
+              // for each key push a new element to an array
+              places.push(
+                new Place(
+                  key,
+                  resData[key].title,
+                  resData[key].description,
+                  resData[key].imageUrl,
+                  resData[key].price,
+                  new Date(resData[key].availableFrom),
+                  new Date(resData[key].availableTo),
+                  resData[key].userId
+                )
+              );
+            }
+          }
+          return places;
+        }),
+        tap((places: Place[]) => {
+          this._places.next(places);
+        })
+      )
+  );
+}
+```
+
+<br><br>
+
+### **Updating Places** <span id="i1204"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+Note: use optional chaining.
+
+```ts
+updatePlace(placeId: string, title: string, description: string) {
+  // create the variable so that we can use it in tap()
+  let updatedPlaces: Place[];
+  return this.places.pipe(
+    // take latest snapshot and complete
+    take(1),
+    // switch Observables (places -> http request)
+    switchMap((places: Place[]) => {
+      const updatedPlaceIndex = places.findIndex(
+        (place) => place.id === placeId
+      );
+      const updatedPlaces = [...places];
+      const oldPlace = updatedPlaces[updatedPlaceIndex];
+      updatedPlaces[updatedPlaceIndex] = new Place(
+        oldPlace.id,
+        title,
+        description,
+        oldPlace.imageUrl,
+        oldPlace.price,
+        oldPlace.availableFrom,
+        oldPlace.availableTo,
+        oldPlace.userId
+      );
+      return this.http.put(
+        environment.firebaseAPIUrl + `offered-places/${placeId}.json`,
+        { ...updatedPlaces[updatedPlaceIndex], id: null }
+      );
+    }),
+    tap((resData) => {
+      this._places.next(updatedPlaces);
+    })
+  );
+}
+```
+
+<br><br>
+
+### **Fetching Data in Multiple Places** <span id="i1205"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+```ts
+getPlace(id: string) {
+  return this.http
+    .get<PlaceData>(environment.firebaseAPIUrl + `offered-places/${id}.json`)
+    .pipe(
+      map((resData) => {
+        return new Place(
+          id,
+          resData.title,
+          resData.description,
+          resData.imageUrl,
+          resData.price,
+          new Date(resData.availableFrom),
+          new Date(resData.availableTo),
+          resData.userId
+        );
+      })
+    );
+}
+```
+
+<br><br>
+
+### **Updating Places Correctly** <span id="i1206"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+EditOfferPage
+
+```ts
+ngOnInit() {
+  this.activatedRoute.params.subscribe((params) => {
+    if (!params.placeId) {
+      this.navController.navigateBack('/places/tabs/offers');
+      return;
+    }
+    this.placeId = params.placeId;
+    this.isLoading = true;
+    this.subscription = this.placesService
+      .getPlace(params.placeId)
+      .subscribe((place) => {
+        this.place = place;
+
+        this.editOfferForm = new FormGroup({
+          title: new FormControl(this.place.title, {
+            updateOn: 'blur',
+            validators: [Validators.required],
+          }),
+          description: new FormControl(this.place.description, {
+            updateOn: 'blur',
+            validators: [Validators.required],
+          }),
+        });
+        this.isLoading = false;
+      });
+  });
+}
+```
+
+<br>
+
+PlacesService
+
+```ts
+updatePlace(placeId: string, title: string, description: string) {
+  // create the variable so that we can use it in tap()
+  let updatedPlaces: Place[];
+  return this.places.pipe(
+    // take latest snapshot and complete
+    take(1),
+    // switch Observables (places -> http request)
+    switchMap((places: Place[]) => {
+      if (!places || places.length <= 0) {
+        return this.fetchPlaces();
+      } else {
+        // of() takes any value and turns it into an Observable
+        return of(places);
+      }
+    }),
+    switchMap((places: Place[]) => {
+      const updatedPlaceIndex = places.findIndex(
+        (place) => place.id === placeId
+      );
+      const updatedPlaces = [...places];
+      const oldPlace = updatedPlaces[updatedPlaceIndex];
+      updatedPlaces[updatedPlaceIndex] = new Place(
+        oldPlace.id,
+        title,
+        description,
+        oldPlace.imageUrl,
+        oldPlace.price,
+        oldPlace.availableFrom,
+        oldPlace.availableTo,
+        oldPlace.userId
+      );
+      return this.http.put(
+        environment.firebaseAPIUrl + `offered-places/${placeId}.json`,
+        { ...updatedPlaces[updatedPlaceIndex], id: null }
+      );
+    }),
+    tap((resData) => {
+      this._places.next(updatedPlaces);
+    })
+  );
+}
+```
+
+<br><br>
+
+### **Error Handling** <span id="i1207"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+EditOfferPage
+
+```ts
+ngOnInit() {
+  this.activatedRoute.params.subscribe((params) => {
+    if (!params.placeId) {
+      this.navController.navigateBack('/places/tabs/offers');
+      return;
+    }
+    this.placeId = params.placeId;
+    this.isLoading = true;
+    this.subscription = this.placesService
+      .getPlace(params.placeId)
+      .subscribe({
+        next: (place) => {
+          this.place = place;
+
+          this.editOfferForm = new FormGroup({
+            title: new FormControl(this.place.title, {
+              updateOn: 'blur',
+              validators: [Validators.required],
+            }),
+            description: new FormControl(this.place.description, {
+              updateOn: 'blur',
+              validators: [Validators.required],
+            }),
+          });
+          this.isLoading = false;
+        },
+        error: (error) => {
+          this.alertCtrl
+            .create({
+              header: 'An error occurred!',
+              message: 'Place could not be fetched. Please try again later.',
+              buttons: [
+                {
+                  text: 'Okay',
+                  handler: () => {
+                    this.router.navigate(['/places/tabs/offers']);
+                  },
+                },
+              ],
+            })
+            .then((alertEl) => {
+              alertEl.present();
+            });
+        },
+      });
+  });
+}
+```
+
+<br><br>
+
+### **Fetching Single Places** <span id="i1208"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+PlaceDetailPage
+
+```html
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/places/tabs/discover"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isLoading ? 'Loading...' : place.title }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="ion-text-center" *ngIf="isLoading">
+    <ion-spinner color="primary"></ion-spinner>
+  </div>
+  <ion-grid class="ion-no-padding" *ngIf="!isLoading">
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3" class="ion-no-padding">
+        <ion-img [src]="place.imageUrl"></ion-img>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3" class="ion-text-center ion-padding">
+        <p>{{ place.description }}</p>
+      </ion-col>
+    </ion-row>
+    <ion-row *ngIf="isBookable">
+      <ion-col size-sm="6" offset-sm="3" class="ion-text-center">
+        <ion-button color="primary" class="ion-margin" (click)="onBookPlace()">
+          Book
+        </ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+```
+
+<br>
+
+```ts
+ngOnInit() {
+  this.activatedRoute.params.subscribe((params) => {
+    if (!params.placeId) {
+      this.navController.navigateBack('/places/tabs/discover');
+    }
+    this.isLoading = true;
+    this.subscription = this.placesService
+      .getPlace(params.placeId)
+      .subscribe({
+        next: (place) => {
+          this.place = place;
+          this.isBookable = place.userId !== this.authService.userId;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          this.alertCtrl
+            .create({
+              header: 'An error occurred!',
+              message: 'Could not load place.',
+              buttons: [
+                {
+                  text: 'Okay',
+                  handler: () => {
+                    this.router.navigate(['/places/tabs/discover']);
+                  },
+                },
+              ],
+            })
+            .then((alertEl) => {
+              alertEl.present();
+            });
+        },
+      });
+  });
+}
+```
+
+<br><br>
+
+### **Adding a Booking** <span id="i1209"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+BookingsService
+
+```ts
+return this.http
+  .post<{ name: string }>(environment.firebaseAPIUrl + "bookings.json", {
+    ...newBooking,
+    id: null,
+  })
+  .pipe(
+    switchMap((resData) => {
+      generatedId = resData.name;
+      return this.bookings;
+    }),
+    // this is important
+    take(1),
+    tap((bookings) => {
+      newBooking.id = generatedId;
+      this._bookings.next(bookings.concat(newBooking));
+    })
+  );
+```
+
+<br><br>
+
+### **Fetching Bookings By User** <span id="i1210"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+Using Firebase orderBy & equalTo queries:
+
+```ts
+fetchBookings() {
+  this.http.get(
+    // orderBy="userId"
+    // equalTo="${this.authService.userId}"
+    environment.firebaseAPIUrl +
+      `bookings.json?orderBy="userId"&equalTo="${this.authService.userId}"`
+  );
+}
+```
+
+<br>
+
+For this to work add new rules to Realtime Database:
+
+- ## Realtime Database -> Rules:
+  ```json
+  {
+    "rules": {
+      ".read": "now < 1669244400000", // 2022-11-24
+      ".write": "now < 1669244400000", // 2022-11-24,
+      "bookings": {
+        ".indexOn": ["userId"]
+      }
+    }
+  }
+  ```
+- `".indexOn": [ "values" ]` - the value is array of all the values that should be searchable.
+
+<br>
+
+Finished method (BookingsService):
+
+```ts
+fetchBookings() {
+  return this.http
+    .get<{ [key: string]: BookingData }>(
+      // orderBy="userId"
+      // equalTo="${this.authService.userId}"
+      environment.firebaseAPIUrl +
+        `bookings.json?orderBy="userId"&equalTo="${this.authService.userId}"`
+    )
+    .pipe(
+      map((bookingData) => {
+        const bookings = [];
+        for (const key in bookingData) {
+          if (bookingData.hasOwnProperty(key)) {
+            bookings.push(
+              new Booking(
+                key,
+                bookingData[key].placeId,
+                bookingData[key].userId,
+                bookingData[key].placeTitle,
+                bookingData[key].placeImage,
+                bookingData[key].firstName,
+                bookingData[key].lastName,
+                bookingData[key].guestNumber,
+                new Date(bookingData[key].bookedFrom),
+                new Date(bookingData[key].bookedTo)
+              )
+            );
+          }
+        }
+        return bookings;
+      }),
+      tap((bookings) => {
+        this._bookings.next(bookings);
+      })
+    );
+}
+```
+
+<br>
+
+BookingsPage:
+
+```ts
+ionViewWillEnter() {
+  this.isLoading = true;
+  this.bookingsService.fetchBookings().subscribe(() => {
+    this.isLoading = false;
+  });
+}
+```
+
+<br><br>
+
+### **Deleting Bookings** <span id="i1211"></span><a href="#t12">&#8593;</a>
+
+<br>
+
+```ts
+cancelBooking(bookingId: string) {
+  return this.http
+    .delete(environment.firebaseAPIUrl + `bookings/${bookingId}.json`)
+    .pipe(
+      switchMap(() => {
+        // return current list of bookings (locally)
+        return this.bookings;
+      }),
+      // take 1 snapshot and complete
+      take(1),
+      tap((bookings) => {
+        // emit a new list of bookings
+        // where I filter out the booking that I want to delete
+        // if id doesn't match - keep
+        // if id matches - discard
+        bookings.filter((booking) => booking.id !== bookingId);
+      })
+    );
+}
+```
 
 <br><br>
 

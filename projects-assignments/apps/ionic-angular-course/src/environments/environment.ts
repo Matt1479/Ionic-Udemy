@@ -3,7 +3,10 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  firebaseAPIUrl:
+    'https://ionic-angular-course-i-default-rtdb.europe-west1.firebasedatabase.app/',
+  firebaseAPIKey: '',
+  production: false,
 };
 
 /*

@@ -14,6 +14,7 @@ export class DiscoverPage implements OnInit, OnDestroy {
   loadedPlaces: Place[];
   listedLoadedPlaces: Place[];
   relevantPlaces: Place[];
+  isLoading = false;
   subscription: Subscription;
 
   constructor(
@@ -27,9 +28,16 @@ export class DiscoverPage implements OnInit, OnDestroy {
       (places: Place[]) => {
         this.loadedPlaces = places;
         this.relevantPlaces = this.loadedPlaces;
-        this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+        this.listedLoadedPlaces = this.relevantPlaces?.slice(1);
       }
     );
+  }
+
+  ionViewWillEnter() {
+    this.isLoading = true;
+    this.placesService.fetchPlaces().subscribe(() => {
+      this.isLoading = false;
+    });
   }
 
   // onOpenMenu() {
@@ -41,12 +49,12 @@ export class DiscoverPage implements OnInit, OnDestroy {
       (event as CustomEvent<SegmentChangeEventDetail>).detail.value === 'all'
     ) {
       this.relevantPlaces = this.loadedPlaces;
-      this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+      this.listedLoadedPlaces = this.relevantPlaces?.slice(1);
     } else {
       this.relevantPlaces = this.loadedPlaces.filter(
         (place) => place.userId !== this.authService.userId
       );
-      this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+      this.listedLoadedPlaces = this.relevantPlaces?.slice(1);
     }
   }
 
