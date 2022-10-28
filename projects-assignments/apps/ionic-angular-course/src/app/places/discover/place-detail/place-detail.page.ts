@@ -10,6 +10,7 @@ import {
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/auth/auth.service';
 import { BookingsService } from 'src/app/bookings/bookings.service';
+import { MapModalComponent } from 'src/app/shared/map-modal/map-modal.component';
 import { CreateBookingComponent } from '../../../bookings/create-booking/create-booking.component';
 import { Place } from '../../place.model';
 import { PlacesService } from '../../places.service';
@@ -140,6 +141,25 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
                 });
             });
         }
+      });
+  }
+
+  onShowFullMap() {
+    this.modalController
+      .create({
+        component: MapModalComponent,
+        componentProps: {
+          center: {
+            lat: this.place.location.latitude,
+            lng: this.place.location.longitude,
+          },
+          selectable: false,
+          closeButtonText: 'Close',
+          title: this.place.location.address,
+        },
+      })
+      .then((modalEl) => {
+        modalEl.present();
       });
   }
 

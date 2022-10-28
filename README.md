@@ -32,6 +32,8 @@
 
 ### <a href="#t12">**Section 12: Sending Http Requests**</a>
 
+### <a href="#t13">**Section 13: Adding Google Maps**</a>
+
 </nav>
 
 <br><br>
@@ -4280,6 +4282,1010 @@ cancelBooking(bookingId: string) {
     );
 }
 ```
+
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 13: Adding Google Maps** <a href="#navi">&#8593;</a> <span id="t13"></span>
+
+<br><br>
+
+1. <a href="#i1300">Introduction</a>
+2. <a href="#i1301">API Setup</a>
+3. <a href="#i1302">Adding a LocationPicker/MapModal Components / Adding The Google Maps SDK / Opening a Modal / Rendering a Map / Picking Locations via a Click on the Map</a>
+4. <a href="#i1303">Finding the Address for a Place</a>
+5. <a href="#i1304">Fetching a Static Image URL</a>
+6. <a href="#i1305">Displaying a Place Preview</a>
+7. <a href="#i1306">Changing the Selection</a>
+8. <a href="#i1307">Removing the Click Listener</a>
+9. <a href="#i1308">Submitting the Location</a>
+10. <a href="#i1309">Outputting Address & Map</a>
+11. <a href="#i1310">Re-using the Maps Modal</a>
+12. <a href="#i1311">Useful Resources & Links</a>
+
+<br><br>
+
+### **Introduction** <span id="i1300"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+In this module:
+
+- Setting up the Google Maps API
+- Adding Google Maps + Geocoding
+
+<br><br>
+
+### **API Setup** <span id="i1301"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+- First you need to set up Google Maps API Keys
+
+<br>
+
+Google Maps API -> https://developers.google.com/maps -> Get started
+
+<br>
+
+<abbr title="Software Development Kit">SDK</abbr> & <abbr title="Application Programming Interface">API</abbr> Documentation: https://developers.google.com/maps/documentation
+
+<br>
+
+Google Maps <abbr title="Software Development Kit">SDK</abbr> - Toolset that allows you to write code that displays and manages the map in your application
+
+<br>
+
+<abbr title="Application Programming Interface">API</abbr> - is what works behind the scenes into which your Google Maps JavaScript <abbr title="Software Development Kit">SDK</abbr> connects automatically
+
+<br>
+
+Google Maps API Picker: https://developers.google.com/maps/documentation/api-picker
+
+<br>
+
+Get API Key: https://developers.google.com/maps/documentation/javascript/get-api-key
+
+<br><br>
+
+### **Adding a LocationPicker/MapModal Components / Adding The Google Maps SDK / Opening a Modal / Rendering a Map / Picking Locations via a Click on the Map** <span id="i1302"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+You could import Google Maps like this into index.html:
+
+```html
+<script
+  async
+  defer
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"
+></script>
+```
+
+- **https://developers.google.com/maps/documentation/javascript**
+
+But that would always load the entire Google Maps JavaScript SDK even if we're not using it yet. Instead we'll dynamically import this when needed.
+
+<br>
+
+- ionic generate component shared/pickers/location-picker
+- ionic generate component shared/map-modal
+
+<br>
+
+Note: **This is mostly the finished code, for better reference check the app**
+
+<br>
+
+**MapModalComponent**:
+
+```html
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="primary">
+      <ion-button (click)="onCancel()">{{ closeButtonText }}</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="map" #map></div>
+</ion-content>
+```
+
+```ts
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  Renderer2,
+  ViewChild,
+} from "@angular/core";
+import { ModalController } from "@ionic/angular";
+import { environment } from "src/environments/environment";
+
+@Component({
+  selector: "app-map-modal",
+  templateUrl: "./map-modal.component.html",
+  styleUrls: ["./map-modal.component.scss"],
+})
+export class MapModalComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild("map") mapElementRef: ElementRef;
+  @Input() center = { lat: -34.397, lng: 150.644 };
+  @Input() selectable = true;
+  @Input() closeButtonText = "Cancel";
+  @Input() title = "Pick Location";
+  clickListener: any;
+  googleMaps: any;
+
+  constructor(
+    private modalCtrl: ModalController,
+    private renderer: Renderer2
+  ) {}
+
+  ngOnInit() {}
+
+  ngAfterViewInit(): void {
+    this.getGoogleMaps()
+      .then((googleMaps) => {
+        this.googleMaps = googleMaps;
+        // get access to the (div) element
+        const mapEl = this.mapElementRef.nativeElement;
+        // googleMaps.Map(a, b);
+        // a - HTML Element to render the map in
+        // b - starting configuration for the map
+        // for example center - defines on which coordinates it should center initially
+        const map = new googleMaps.Map(mapEl, {
+          // lat - latitude
+          // lng - longitude
+          center: this.center,
+          // zoom - set how far we're zoomed in
+          zoom: 16,
+        });
+
+        // fire an event as soon as it (map) has been loaded (during first initial load)
+        this.googleMaps.event.addListenerOnce(map, "idle", () => {
+          this.renderer.addClass(mapEl, "visible");
+        });
+
+        // if selectable - add click listener
+        if (this.selectable) {
+          // pick location with a click/tap:
+          this.clickListener = map.addListener("click", (event) => {
+            const selectedCoords = {
+              // event.latLng.lat() - get the latitude coordinates of that event
+              latitude: event.latLng.lat(),
+              // event.latLng.lng() - get the longitude coordinates...
+              longitude: event.latLng.lng(),
+            };
+            // dismiss upon clicking, and pass the coordinates...
+            this.modalCtrl.dismiss(selectedCoords);
+          });
+        }
+        // else add marker without click listener
+        else {
+          const marker = new googleMaps.Marker({
+            position: this.center,
+            map: map,
+            title: "Picked Location",
+          });
+          marker.setMap(map);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  onCancel() {
+    this.modalCtrl.dismiss();
+  }
+
+  ngOnDestroy(): void {
+    if (this.clickListener) {
+      this.googleMaps.event.removeListener(this.clickListener);
+    }
+  }
+
+  private getGoogleMaps(): Promise<any> {
+    const win = window as any;
+    const googleModule = win.google; // needed for JS SDK to work
+    // if GoogleModule has been loaded then...
+    if (googleModule && googleModule.maps) {
+      // return google maps module
+      return Promise.resolve(googleModule.maps);
+    }
+    return new Promise((resolve, reject) => {
+      // rare case in which we actually interact with DOM directly like this
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsAPIKey}`;
+      // load in a non-blocking way
+      script.async = true;
+      script.defer = true;
+      // Note: Even if we do interact with the DOM directly, we don't mess with
+      // Angular's template here, instead we append this to our root document
+      // whereas Angular only has control over a part of this document (body > app-root)
+      // so we're not rendering anything into Angular template
+      // or into HTML content rendered based on Angular template
+      document.body.appendChild(script);
+      script.onload = () => {
+        const loadedGoogleModule = win.google;
+        if (loadedGoogleModule && loadedGoogleModule.maps) {
+          resolve(loadedGoogleModule.maps);
+        } else {
+          reject("Google maps SDK not available.");
+        }
+      };
+    });
+  }
+}
+```
+
+```scss
+.map {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+
+  background-color: transparent;
+
+  opacity: 0;
+  transition: opacity 150ms ease-in;
+}
+
+.map.visible {
+  opacity: 1;
+}
+```
+
+<br>
+
+SharedModule:
+
+```ts
+import { CommonModule } from "@angular/common";
+import { NgModule } from "@angular/core";
+import { IonicModule } from "@ionic/angular";
+import { MapModalComponent } from "./map-modal/map-modal.component";
+import { LocationPickerComponent } from "./pickers/location-picker/location-picker.component";
+
+@NgModule({
+  declarations: [LocationPickerComponent, MapModalComponent],
+  // for *ngIf, Ionic Components
+  imports: [CommonModule, IonicModule],
+  // to be able to use those in different components
+  exports: [LocationPickerComponent, MapModalComponent],
+})
+export class SharedModule {}
+```
+
+<br>
+
+**LocationPickerComponent**:
+
+```html
+<div class="picker">
+  <ion-spinner color="primary" *ngIf="isLoading"></ion-spinner>
+  <ion-img
+    role="button"
+    class="location-image"
+    (click)="onPickLocation()"
+    [src]="selectedLocationImage"
+    *ngIf="selectedLocationImage && !isLoading"
+  ></ion-img>
+  <ion-button
+    color="primary"
+    (click)="onPickLocation()"
+    *ngIf="!selectedLocationImage && !isLoading"
+  >
+    <ion-icon name="map" slot="start"> </ion-icon>
+    <ion-label> Select Location </ion-label>
+  </ion-button>
+</div>
+```
+
+```ts
+import { HttpClient } from "@angular/common/http";
+import { Component, EventEmitter, OnInit, Output } from "@angular/core";
+import { ModalController } from "@ionic/angular";
+import { of } from "rxjs";
+import { map, switchMap } from "rxjs/operators";
+import { PlaceLocation } from "src/app/places/location.model";
+import { environment } from "src/environments/environment";
+import { MapModalComponent } from "../../map-modal/map-modal.component";
+
+@Component({
+  selector: "app-location-picker",
+  templateUrl: "./location-picker.component.html",
+  styleUrls: ["./location-picker.component.scss"],
+})
+export class LocationPickerComponent implements OnInit {
+  // @Output() makes it listenable from the outside
+  @Output() locationPick = new EventEmitter<PlaceLocation>();
+  selectedLocationImage: string;
+  isLoading = false;
+
+  constructor(private modalCtrl: ModalController, private http: HttpClient) {}
+
+  ngOnInit() {}
+
+  onPickLocation() {
+    this.modalCtrl
+      .create({
+        component: MapModalComponent,
+      })
+      .then((modalEl) => {
+        // promise that will resolve as soon as it did dismiss
+        modalEl.onDidDismiss().then((modalData) => {
+          if (!modalData.data) {
+            return;
+          }
+          const pickedLocation: PlaceLocation = {
+            latitude: modalData.data.latitude,
+            longitude: modalData.data.longitude,
+            address: null,
+            staticMapImageUrl: null,
+          };
+          this.isLoading = true;
+          this.getAddress(modalData.data.latitude, modalData.data.longitude)
+            // switchMap allows us to take the result
+            // of Observable 1, and return a new Observable
+            .pipe(
+              switchMap((address) => {
+                pickedLocation.address = address;
+                return of(
+                  this.getMapImage(
+                    pickedLocation.latitude,
+                    pickedLocation.longitude,
+                    14
+                  )
+                );
+              })
+            )
+            .subscribe((staticMapImageUrl) => {
+              pickedLocation.staticMapImageUrl = staticMapImageUrl;
+              this.selectedLocationImage = staticMapImageUrl;
+              this.isLoading = false;
+              this.locationPick.emit(pickedLocation);
+            });
+        });
+        modalEl.present();
+      });
+  }
+
+  private getAddress(latitude: number, longitude: number) {
+    return this.http
+      .get<any>(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${environment.googleMapsAPIKey}`
+      )
+      .pipe(
+        map((geoData) => {
+          if (!geoData || !geoData.results || geoData.results.length === 0) {
+            return null;
+          }
+          return geoData.results[0].formatted_address;
+        })
+      );
+  }
+
+  private getMapImage(latitude: number, longitude: number, zoom: number) {
+    // no need to send to send a request since this is a string
+    // that will yield an image which dynamically generated on Google servers
+    // and we will dynamically use that as a source for our images in our application
+    // center=lat,lng
+    // zoom=...
+    // size=widthxheight
+    // maptype=roadmap or other
+    // &markers
+    // label:YourLabel
+    // after that you have coordinates for the marker
+    // key=APIKEY
+    return `https://maps.googleapis.com/maps/api/staticmap?
+    center=${latitude},${longitude}
+    &zoom=${zoom}
+    &size=500x300&maptype=roadmap
+    &markers=color:red%7Clabel:Place%7C${latitude},${longitude}
+    &key=${environment.googleMapsAPIKey}`;
+  }
+}
+```
+
+```scss
+.picker {
+  width: 30rem;
+  max-width: 80%;
+  height: 20rem;
+  max-height: 30vh;
+  border: 1px solid var(--ion-color-primary);
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.location-image {
+  width: 100%;
+  height: 100%;
+  // fit the surrounding div
+  object-fit: cover;
+}
+```
+
+<br>
+
+In any Component's Module you will import that SharedModule in order to use MapModal/LocationPicker
+
+<br>
+
+Add to a Component:
+
+```html
+<app-location-picker
+  (locationPick)="onLocationPicked($event)"
+></app-location-picker>
+```
+
+<br>
+
+**Note**: You can use Angular Google Maps (lots of Ng Componets to work with Google Maps): https://angular-maps.com/
+<br><br>
+
+### **Finding the Address for a Place** <span id="i1303"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+Getting Address:
+
+Google Cloud Platform Console -> APIs -> Geocoding
+
+- Google Geocoding Docs: https://developers.google.com/maps/documentation/geocoding/overview
+
+- Reverse Geocoding (address lookup): https://developers.google.com/maps/documentation/geocoding/requests-reverse-geocoding
+
+<br>
+
+```ts
+onPickLocation() {
+  this.modalCtrl
+    .create({
+      component: MapModalComponent,
+    })
+    .then((modalEl) => {
+      // promise that will resolve as soon as it did dismiss
+      modalEl.onDidDismiss().then((modalData) => {
+        if (!modalData.data) {
+          return;
+        }
+        this.getAddress(
+          modalData.data.latitude,
+          modalData.data.longitude
+        ).subscribe((address) => {
+          console.log(address);
+        });
+      });
+      modalEl.present();
+    });
+}
+
+private getAddress(latitude: number, longitude: number) {
+  return this.http
+    .get<any>(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${environment.googleMapsAPIKey}`
+    )
+    .pipe(
+      map((geoData) => {
+        if (!geoData || !geoData.results || geoData.results.length === 0) {
+          return null;
+        }
+        return geoData.results[0].formatted_address;
+      })
+    );
+}
+```
+
+<br><br>
+
+### **Fetching a Static Image URL** <span id="i1304"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+- Google Maps Static API - docs: https://developers.google.com/maps/documentation/maps-static/overview
+
+LocationModel
+
+```ts
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export interface PlaceLocation extends Coordinates {
+  address: string;
+  staticMapImageUrl: string;
+}
+```
+
+<br>
+
+LocationPicker
+
+```ts
+onPickLocation() {
+  this.modalCtrl
+    .create({
+      component: MapModalComponent,
+    })
+    .then((modalEl) => {
+      // promise that will resolve as soon as it did dismiss
+      modalEl.onDidDismiss().then((modalData) => {
+        if (!modalData.data) {
+          return;
+        }
+        const pickedLocation: PlaceLocation = {
+          latitude: modalData.data.latitude,
+          longitude: modalData.data.longitude,
+          address: null,
+          staticMapImageUrl: null,
+        };
+        this.getAddress(modalData.data.latitude, modalData.data.longitude)
+          // switchMap allows us to take the result
+          // of Observable 1, and return a new Observable
+          .pipe(
+            switchMap((address) => {
+              pickedLocation.address = address;
+              return of(
+                this.getMapImage(
+                  pickedLocation.latitude,
+                  pickedLocation.longitude,
+                  14
+                )
+              );
+            })
+          ).subscribe((staticMapImageUrl) => {
+            pickedLocation.staticMapImageUrl = staticMapImageUrl;
+          });
+      });
+      modalEl.present();
+    });
+}
+
+// getAddress() {}
+
+private getMapImage(latitude: number, longitude: number, zoom: number) {
+  // no need to send to send a request since this is a string
+  // that will yield an image which dynamically generated on Google servers
+  // and we will dynamically use that as a source for our images in our application
+  // center=lat,lng
+  // zoom=...
+  // size=widthxheight
+  // maptype=roadmap or other
+  // &markers
+  // label:YourLabel
+  // after that you have coordinates for the marker
+  // key=APIKEY
+    return `https://maps.googleapis.com/maps/api/staticmap?
+    center=${latitude},${longitude}
+    &zoom=${zoom}
+    &size=500x300&maptype=roadmap
+    &markers=color:red%7Clabel:Place%7C${latitude},${longitude}
+    &key=${environment.googleMapsAPIKey}`;
+}
+```
+
+<br><br>
+
+### **Displaying a Place Preview** <span id="i1305"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+LocationPicker
+
+```scss
+.picker {
+  width: 30rem;
+  max-width: 80%;
+  height: 20rem;
+  max-height: 30vh;
+  border: 1px solid var(--ion-color-primary);
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.location-image {
+  width: 100%;
+  height: 100%;
+  // fit the surrounding div
+  object-fit: cover;
+}
+```
+
+```html
+<div class="picker">
+  <ion-spinner color="primary" *ngIf="isLoading"></ion-spinner>
+  <ion-img
+    class="location-image"
+    [src]="selectedLocationImage"
+    *ngIf="selectedLocationImage && !isLoading"
+  ></ion-img>
+  <ion-button
+    color="primary"
+    (click)="onPickLocation()"
+    *ngIf="!selectedLocationImage && !isLoading"
+  >
+    <ion-icon name="map" slot="start"> </ion-icon>
+    <ion-label> Select Location </ion-label>
+  </ion-button>
+</div>
+```
+
+```ts
+selectedLocationImage: string;
+isLoading = false;
+
+onPickLocation() {
+  this.modalCtrl
+    .create({
+      component: MapModalComponent,
+    })
+    .then((modalEl) => {
+      modalEl.onDidDismiss().then((modalData) => {
+        // ...
+        const pickedLocation: PlaceLocation = {
+          // ...
+        };
+        this.isLoading = true; // <--
+        this.getAddress(modalData.data.latitude, modalData.data.longitude)
+          .pipe(
+            // ...
+          )
+          .subscribe((staticMapImageUrl) => {
+            pickedLocation.staticMapImageUrl = staticMapImageUrl;
+            this.selectedLocationImage = staticMapImageUrl;
+            this.isLoading = false; // <--
+          });
+      });
+      modalEl.present();
+    });
+}
+```
+
+<br><br>
+
+### **Changing the Selection** <span id="i1306"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+```html
+<div class="picker">
+  <ion-spinner color="primary" *ngIf="isLoading"></ion-spinner>
+  <ion-img
+    role="button"
+    class="location-image"
+    (click)="onPickLocation()"
+    [src]="selectedLocationImage"
+    *ngIf="selectedLocationImage && !isLoading"
+  ></ion-img>
+  <ion-button
+    color="primary"
+    (click)="onPickLocation()"
+    *ngIf="!selectedLocationImage && !isLoading"
+  >
+    <ion-icon name="map" slot="start"> </ion-icon>
+    <ion-label> Select Location </ion-label>
+  </ion-button>
+</div>
+```
+
+<br><br>
+
+### **Removing the Click Listener** <span id="i1307"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+MapModalComponent:
+
+```ts
+clickListener: any;
+googleMaps: any;
+
+  ngAfterViewInit(): void {
+  this.getGoogleMaps()
+    .then((googleMaps) => {
+      // store in a property
+      this.googleMaps = googleMaps;
+      });
+
+      this.googleMaps.event.addListenerOnce(map, 'idle', () => {
+        // ...
+      });
+
+      // store in a property
+      this.clickListener = map.addListener('click', (event) => {
+        // ...
+      });
+    })
+    .catch((err) => {
+      // ...
+    });
+}
+
+
+ngOnDestroy(): void {
+  this.googleMaps.event.removeListener(this.clickListener);
+}
+```
+
+<br><br>
+
+### **Submitting the Location** <span id="i1308"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+NewOfferPage:
+
+```ts
+// add a new form control:
+ngOnInit() {
+  this.newOfferForm = new FormGroup({
+    // ...
+    location: new FormControl(null, { validators: [Validators.required] }),
+  })
+}
+
+onLocationPicked(location: PlaceLocation) {
+  this.newOfferForm.patchValue({
+    location: location,
+  });
+}
+
+// add this.newOfferForm.value.location to onCreateOffer/addPlace
+```
+
+```html
+<app-location-picker
+  (locationPick)="onLocationPicked($event)"
+></app-location-picker>
+```
+
+<br>
+
+LocationPickerComponent:
+
+```ts
+// @Output() makes it listenable from the outside
+@Output() locationPicked = new EventEmitter<PlaceLocation>();
+
+  onPickLocation() {
+  this.modalCtrl
+    .create({
+      component: MapModalComponent,
+    })
+    .then((modalEl) => {
+      modalEl.onDidDismiss().then((modalData) => {
+        // ...
+        const pickedLocation: PlaceLocation = {
+          // ...
+        };
+        // ...
+        this.getAddress(modalData.data.latitude, modalData.data.longitude)
+          .pipe(
+            // ...
+          )
+          .subscribe((staticMapImageUrl) => {
+            // ...
+            // emit the event
+            this.locationPick.emit(pickedLocation);
+          });
+      });
+      modalEl.present();
+    });
+}
+```
+
+also update PlacesService, models.
+
+<br><br>
+
+### **Outputting Address & Map** <span id="i1309"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+PlaceDetailPage
+
+```html
+<ion-row>
+  <ion-col size-sm="6" offset-sm="3" class="ion-padding ion-text-center">
+    <p>{{ place.location.address }}</p>
+  </ion-col>
+</ion-row>
+<ion-row>
+  <ion-col size-sm="6" offset-sm="3" class="ion-no-padding">
+    <ion-img
+      class="location-image"
+      [src]="place.location.staticMapImageUrl"
+    ></ion-img>
+  </ion-col>
+</ion-row>
+```
+
+```ts
+.location-image {
+  width: 100%;
+  height: 25rem;
+  max-height: 30vh;
+  object-fit: cover;
+}
+
+p {
+  margin: 0;
+}
+```
+
+<br><br>
+
+### **Re-using the Maps Modal** <span id="i1310"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+- import SharedModule
+
+<br>
+
+PlaceDetailPage
+
+```html
+<ion-img
+  role="button"
+  (click)="onShowFullMap()"
+  class="location-image"
+  [src]="place.location.staticMapImageUrl"
+></ion-img>
+```
+
+```ts
+onShowFullMap() {
+  this.modalController
+    .create({
+      component: MapModalComponent,
+    })
+    .then((modalEl) => {
+      modalEl.present();
+    });
+}
+```
+
+<br>
+
+MapModalComponent
+
+```ts
+@ViewChild('map') mapElementRef: ElementRef;
+@Input() center = { lat: -34.397, lng: 150.644 };
+@Input() selectable = true;
+@Input() closeButtonText = 'Cancel';
+@Input() title = 'Pick Location';
+// ...
+
+constructor(
+  // ...
+) {}
+
+ngOnInit() {}
+
+ngAfterViewInit(): void {
+  this.getGoogleMaps()
+    .then((googleMaps) => {
+      // ...
+      const map = new googleMaps.Map(mapEl, {
+      // ...
+      });
+
+      this.googleMaps.event.addListenerOnce(map, 'idle', () => {
+      // ...
+      });
+
+      // if selectable - add click listener
+      if (this.selectable) {
+        // pick location with a click/tap:
+        this.clickListener = map.addListener('click', (event) => {
+          const selectedCoords = {
+            // event.latLng.lat() - get the latitude coordinates of that event
+            latitude: event.latLng.lat(),
+            // event.latLng.lng() - get the longitude coordinates...
+            longitude: event.latLng.lng(),
+          };
+          // dismiss upon clicking, and pass the coordinates...
+          this.modalCtrl.dismiss(selectedCoords);
+        });
+      }
+      // else add marker, no click listener
+      else {
+        const marker = new googleMaps.Marker({
+          position: this.center,
+          map: map,
+          title: 'Picked Location',
+        });
+        marker.setMap(map);
+      }
+    })
+    .catch((err) => {
+      // ...
+    });
+}
+
+// ...
+
+ngOnDestroy(): void {
+  if (this.clickListener) {
+    this.googleMaps.event.removeListener(this.clickListener);
+  }
+}
+```
+
+<br><br>
+
+PlaceDetailPage (again):
+
+```ts
+onShowFullMap() {
+  this.modalController
+    .create({
+      component: MapModalComponent,
+      componentProps: {
+        center: {
+          lat: this.place.location.latitude,
+          lng: this.place.location.longitude,
+        },
+        selectable: false,
+        closeButtonText: 'Close',
+        title: this.place.location.address,
+      },
+    })
+    .then((modalEl) => {
+      modalEl.present();
+    });
+}
+```
+
+<br>
+
+MapModalComponent (again):
+
+```html
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="primary">
+      <ion-button (click)="onCancel()">{{ closeButtonText }}</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="map" #map></div>
+</ion-content>
+```
+
+<br><br>
+
+### **Useful Resources & Links** <span id="i1311"></span><a href="#t13">&#8593;</a>
+
+<br>
+
+Official Google Maps JS SDK Docs: https://developers.google.com/maps/documentation/javascript/tutorial
+
+<br>
+
+Google Maps Pricing: https://cloud.google.com/maps-platform/pricing/
 
 <br><br>
 
