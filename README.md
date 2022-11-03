@@ -34,6 +34,8 @@
 
 ### <a href="#t13">**Section 13: Adding Google Maps**</a>
 
+### <a href="#t14">**Section 14: Using Native Device Features (Camera & Location)**</a>
+
 </nav>
 
 <br><br>
@@ -5286,6 +5288,1074 @@ Official Google Maps JS SDK Docs: https://developers.google.com/maps/documentati
 <br>
 
 Google Maps Pricing: https://cloud.google.com/maps-platform/pricing/
+
+<br><br>
+
+<hr>
+
+<br><br>
+
+## **Section 14: Using Native Device Features (Camera & Location)** <a href="#navi">&#8593;</a> <span id="t14"></span>
+
+<br><br>
+
+1. <a href="#i1400">Introduction</a>
+2. <a href="#i1401">Understanding Capacitor & Cordova</a>
+3. <a href="#i1402">Using the Docs</a>
+4. <a href="#i1403">Using Capacitor v3</a>
+5. <a href="#i1404">Using Capacitor Plugins & Running the App on Native Devices</a>
+6. <a href="#i1405">Getting the User Location</a>
+7. <a href="#i1406">Testing the Location Feature</a>
+8. <a href="#i1407">Starting With the Image Picker</a>
+9. <a href="#i1408">Taking Pictures</a>
+10. <a href="#i1409">Avoid Distorted Pictures</a>
+11. <a href="#i1410">Detecting the Platform Correctly</a>
+12. <a href="#i1411">Adding a Filepicker Fallback</a>
+13. <a href="#i1412">Converting the Image String to a File</a>
+14. <a href="#i1413">Storing the Image in the Form</a>
+15. <a href="#i1414">Capacitor v1 & PWA Elements</a>
+16. <a href="#i1415">Using PWA Elements</a>
+17. <a href="#i1416">Improving the ImagePicker Compponent</a>
+18. <a href="#i1417">MUST READ: Firebase Cloud Functions Billing</a>
+19. <a href="#i1418">Adding Server-side Image Uploading Code</a>
+20. <a href="#i1419">Adding Image Upload</a>
+
+<br><br>
+
+### **Introduction** <span id="i1400"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+In this module:
+
+- How Capacitor Works
+- Using Geolocation
+- Using the Camera
+
+<br><br>
+
+### **Understanding Capacitor & Cordova** <span id="i1401"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+<img src="./img/capacitor-cordova-overview.png" alt="capacitor-cordova-overview">
+
+<br>
+
+<img src="./img/capacitor-overview.png" alt="capacitor-overview">
+
+<br><br>
+
+### **Using the Docs** <span id="i1402"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+- Capacitor Docs: https://capacitorjs.com/docs
+- Capacitor Plugins: https://capacitorjs.com/docs/plugins
+- Ionic Native APIs: https://ionicframework.com/docs/native
+
+<br><br>
+
+### **Using Capacitor v3** <span id="i1403"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+In the next lecture, we'll start using the **"Capacitor"** package.
+
+This course was recorded for Capacitor v2 but it also works for the latest version: **Capacitor v3**.
+
+You can check your `package.json` file to determine which version of Capacitor you're using.
+
+There's just a small adjustment you should make, in order to make the code work with **Capacitor v3**:
+
+Whenever I import `Plugins` from `'@capacitor/core'` and then retrieve specific plugins (like the `Camera`) from `Plugins`, you should **install an extra package + import the plugin from there**.
+
+For example, in the next lecture, we'll use the `SplashScreen` plugin like this:
+
+```ts
+import { Plugins, Capacitor } from "@capacitor/core";
+// other code ...
+Plugins.SplashScreen.hide();
+```
+
+When using **Capacitor v3**, you should instead install a separate package:
+
+`npm install --save @capacitor/splash-screen`
+
+And then import from that package:
+
+```ts
+import { Capacitor } from "@capacitor/core";
+import { SplashScreen } from "@capacitor/splash-screen";
+// other code ...
+SplashScreen.hide();
+```
+
+The same will be true for other plugins which we'll use later in the course.
+
+For example, once we use the `Camera` plugin, you would switch from:
+
+```ts
+import { Plugins, Capacitor } from "@capacitor/core";
+const { Camera } = Plugins;
+```
+
+to
+
+`npm install --save @capacitor/camera`
+
+and
+
+```ts
+import { Capacitor } from "@capacitor/core";
+import { Camera } from "@capacitor/camera";
+```
+
+<br><br>
+
+### **Using Capacitor Plugins & Running the App on Native Devices** <span id="i1404"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+- `ng build`
+- `ionic capacitor add android`
+- `ionic capacitor copy android`
+- `ionic capacitor open`
+
+or just do:
+
+- `ionic capacitor sync`
+- `ionic capacitor open android`
+
+<br>
+
+- if something doesn't work:
+  - `npx cap sync`
+  - `ionic capacitor sync`
+    - sync: ng build + ionic capacitor copy android
+
+<br>
+
+#### **Apply Changes**
+
+<br>
+
+- `ionic build && ionic cap sync && ionic cap open android`
+
+<br><br>
+
+### **Getting the User Location** <span id="i1405"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+#### **Geolocation Plugin**
+
+<br>
+
+**Note**: whenever you're using any plugin you should check what you need to set up regarding the permissions, e.g. https://capacitorjs.com/docs/apis/geolocation#android, https://capacitorjs.com/docs/apis/geolocation#ios
+
+<br>
+
+- Capacitor - Geolocation: https://capacitorjs.com/docs/apis/geolocation
+
+<br>
+
+**Installation**
+
+```
+npm install @capacitor/geolocation
+npx cap sync
+```
+
+<br>
+
+**Permissions**
+
+- **Android**
+  - Go to `android/app/src/main/AndroidManifest.xml`
+  - Add these keys:
+  - ```xml
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" />
+    ```
+
+<br>
+
+- **iOS**:
+  - Go to `ios/App/App/Info.plist`
+  - Set up those keys:
+    - `NSLocationAlwaysUsageDescription` (Privacy - Location Always Usage Description)
+    - `NSLocationWhenInUseUsageDescription` (Privacy - Location When In Use Usage Description)
+      - for example:
+      - ```xml
+        <key>NSLocationAlwaysUsageDescription</key>
+        <string>Always allow Geolocation?</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>Allow Geolocation?</string>
+        ```
+
+<br>
+
+**Using Geolocation Plugin**
+
+LocationPickerComponent
+
+```ts
+onPickLocation() {
+  this.actionSheetCtrl
+    .create({
+      header: 'Please Choose',
+      buttons: [
+        {
+          text: 'Auto-Locate',
+          handler: () => {
+            this.locateUser();
+          },
+        },
+        {
+          text: 'Pick on Map',
+          handler: () => {
+            this.openMap();
+          },
+        },
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+      ],
+    })
+    .then((actionSheetEl) => {
+      actionSheetEl.present();
+    });
+}
+
+private locateUser() {
+  if (!Capacitor.isPluginAvailable('Geolocation')) {
+    this.showErrorAlert();
+    return;
+  }
+  this.isLoading = true;
+  Geolocation.getCurrentPosition()
+    .then((geoPosition) => {
+      const coordinates: Coordinates = {
+        latitude: geoPosition.coords.latitude,
+        longitude: geoPosition.coords.longitude,
+      };
+      this.createPlace(coordinates.latitude, coordinates.longitude);
+      this.isLoading = false;
+    })
+    .catch((error) => {
+      this.isLoading = false;
+      this.showErrorAlert();
+    });
+}
+
+private showErrorAlert() {
+  this.alertCtrl
+    .create({
+      header: 'Could not fetch location',
+      message: 'Please use the map to pick a location',
+      buttons: ['Okay'],
+    })
+    .then((alertEl) => alertEl.present());
+}
+
+private openMap() {
+  this.modalCtrl
+    .create({
+      component: MapModalComponent,
+    })
+    .then((modalEl) => {
+      // promise that will resolve as soon as it did dismiss
+      modalEl.onDidDismiss().then((modalData) => {
+        if (!modalData.data) {
+          return;
+        }
+        const coordinates: Coordinates = {
+          latitude: modalData.data.latitude,
+          longitude: modalData.data.longitude,
+        };
+        this.createPlace(coordinates.latitude, coordinates.longitude);
+      });
+      modalEl.present();
+    });
+}
+
+private createPlace(latitude: number, longitude: number) {
+  const pickedLocation: PlaceLocation = {
+    latitude: latitude,
+    longitude: longitude,
+    address: null,
+    staticMapImageUrl: null,
+  };
+  this.isLoading = true;
+  this.getAddress(latitude, longitude)
+    // switchMap allows us to take the result
+    // of Observable 1, and return a new Observable
+    .pipe(
+      switchMap((address) => {
+        pickedLocation.address = address;
+        return of(
+          this.getMapImage(
+            pickedLocation.latitude,
+            pickedLocation.longitude,
+            14
+          )
+        );
+      })
+    )
+    .subscribe((staticMapImageUrl) => {
+      pickedLocation.staticMapImageUrl = staticMapImageUrl;
+      this.selectedLocationImage = staticMapImageUrl;
+      this.isLoading = false;
+      this.locationPick.emit(pickedLocation);
+    });
+}
+```
+
+<br><br>
+
+### **Testing the Location Feature** <span id="i1406"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+- `ionic build && ionic cap sync && ionic cap open android`
+
+<br><br>
+
+### **Starting With the Image Picker** <span id="i1407"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+> #### **Camera**
+
+- **iOS**
+  - https://capacitorjs.com/docs/apis/camera#ios
+- **Android**
+  - https://capacitorjs.com/docs/apis/camera#android
+
+<br><br>
+
+### **Taking Pictures** <span id="i1408"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+> #### **ImagePicker**
+
+- `ionic generate component shared/pickers/image-picker`
+- All of the options, usage, etc.: https://capacitorjs.com/docs/apis/camera#interfaces
+
+```html
+<div class="picker">
+  <ion-img
+    role="button"
+    class="image"
+    (click)="onPickImage()"
+    [src]="selectedImage"
+    *ngIf="selectedImage"
+  ></ion-img>
+  <ion-button color="primary" (click)="onPickImage()" *ngIf="!selectedImage">
+    <ion-icon name="camera" slot="start"> </ion-icon>
+    <ion-label> Take Picture </ion-label>
+  </ion-button>
+</div>
+```
+
+```ts
+import { Component, EventEmitter, OnInit, Output } from "@angular/core";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Capacitor } from "@capacitor/core";
+
+@Component({
+  selector: "app-image-picker",
+  templateUrl: "./image-picker.component.html",
+  styleUrls: ["./image-picker.component.scss"],
+})
+export class ImagePickerComponent implements OnInit {
+  @Output() imagePick = new EventEmitter<string>();
+  selectedImage: string;
+
+  constructor() {}
+
+  ngOnInit() {}
+
+  onPickImage() {
+    if (!Capacitor.isPluginAvailable("Camera")) {
+      return;
+    }
+
+    Camera.getPhoto({
+      quality: 50, // 1-100
+      source: CameraSource.Prompt,
+      correctOrientation: true,
+      // height: 320,
+      // width: 200,
+      width: 600,
+      allowEditing: true,
+      resultType: CameraResultType.DataUrl, // Or Base64
+    })
+      .then((image) => {
+        this.selectedImage = image.dataUrl;
+        this.imagePick.emit(image.dataUrl);
+      })
+      .catch((error) => {
+        console.log(error);
+        return false;
+      });
+  }
+}
+```
+
+<br>
+
+NewOfferPage
+
+```html
+<app-image-picker (imagePick)="onImagePicked($event)"></app-image-picker>
+```
+
+```ts
+onImagePicked(imageData: string) {}
+```
+
+<br><br>
+
+### **Avoid Distorted Pictures** <span id="i1409"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+In the previous lecture, I showed how you can set the `width` and/ or `height` of the taken picture by passing the `width`/ `height` properties to the object you use for configuring the photo.
+
+Of course, you might want to **only use one of the two properties** to avoid distorted images. Hence for this course, I recommend simply going with a `width: 600` or something along these lines.
+
+<br><br>
+
+### **Detecting the Platform Correctly** <span id="i1410"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+Apply the styles from LocationPicker to ImagePicker.
+
+<br>
+
+Platform(s):
+
+```ts
+constructor(private platform: Platform) {} // @ionic/angular
+
+ngOnInit() {
+  console.log('Mobile:', this.platform.is('mobile'));
+  console.log('Hybrid:', this.platform.is('hybrid'));
+  console.log('iOS:', this.platform.is('ios'));
+  console.log('Android:', this.platform.is('android'));
+  console.log('Desktop:', this.platform.is('desktop'));
+}
+```
+
+<br><br>
+
+### **Adding a Filepicker Fallback** <span id="i1411"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+```html
+<div class="picker">
+  <ion-img
+    role="button"
+    class="image"
+    (click)="onPickImage()"
+    [src]="selectedImage"
+    *ngIf="selectedImage"
+  ></ion-img>
+  <ion-button color="primary" (click)="onPickImage()" *ngIf="!selectedImage">
+    <ion-icon name="camera" slot="start"> </ion-icon>
+    <ion-label> Take Picture </ion-label>
+  </ion-button>
+</div>
+
+<input
+  type="file"
+  *ngIf="usePicker"
+  #filePicker
+  (change)="onFileChosen($event)"
+/>
+```
+
+```ts
+@ViewChild('filePicker') filePicker: ElementRef<HTMLInputElement>;
+
+constructor(private platform: Platform) {}
+
+ngOnInit() {
+  console.log('Mobile:', this.platform.is('mobile'));
+  console.log('Hybrid:', this.platform.is('hybrid'));
+  console.log('iOS:', this.platform.is('ios'));
+  console.log('Android:', this.platform.is('android'));
+  console.log('Desktop:', this.platform.is('desktop'));
+  if (
+    (this.platform.is('mobile') && !this.platform.is('hybrid')) ||
+    this.platform.is('desktop')
+  ) {
+    this.usePicker = true;
+  }
+}
+
+onPickImage() {
+  if (!Capacitor.isPluginAvailable('Camera') || !Camera || this.usePicker) {
+    this.filePicker.nativeElement.click(); // execute a click
+    return;
+  }
+
+  // ...
+}
+
+onFileChosen(event: Event) {
+  console.log(event);
+}
+```
+
+```scss
+input[type="file"] {
+  display: none;
+}
+```
+
+<br><br>
+
+### **Getting the Picked Image** <span id="i1411"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+```ts
+onFileChosen(event: Event) {
+  const pickedFile = (event.target as HTMLInputElement).files[0];
+  if (!pickedFile) {
+    // or show an alert
+    return;
+  }
+
+  const fr = new FileReader();
+  fr.onload = () => {
+    // conversion
+    const dataUrl = fr.result.toString();
+    this.selectedImage = dataUrl;
+  };
+  fr.readAsDataURL(pickedFile);
+}
+```
+
+<br><br>
+
+### **Converting the Image String to a File** <span id="i1412"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+ImagePicker
+
+```ts
+@Output() imagePick = new EventEmitter<string | File>();
+```
+
+<br>
+
+NewOfferPage
+
+```ts
+// base64ToBlob
+// blob in the end is a file
+function base64ToBlob(base64Data, contentType) {
+  contentType = contentType || "";
+  const sliceSize = 1024;
+  const byteCharacters = atob(base64Data);
+  const bytesLength = byteCharacters.length;
+  const slicesCount = Math.ceil(bytesLength / sliceSize);
+  const byteArrays = new Array(slicesCount);
+
+  for (var sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+    const begin = sliceIndex * sliceSize;
+    const end = Math.min(begin + sliceSize, bytesLength);
+
+    const bytes = new Array(end - begin);
+    for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
+      bytes[i] = byteCharacters[offset].charCodeAt(0);
+    }
+    byteArrays[sliceIndex] = new Uint8Array(bytes);
+  }
+  return new Blob(byteArrays, { type: contentType });
+}
+
+// ...
+
+onImagePicked(imageData: string | File) {
+  let imageFile;
+  // NOTE: Only run this logic if you're using Base64 (instead of DataUrl)
+  if (typeof imageData === 'string') {
+    // if we get base64 string then...
+    try {
+      imageFile = base64ToBlob(
+        imageData.replace('data:image/jpeg;base64', ''),
+        'image/jpeg'
+      );
+    } catch (error) {
+      // or throw an alert - conversion failed
+      console.log(error);
+      return;
+    }
+  } else {
+    // if we get file then...
+    imageFile = imageData;
+  }
+  this.newOfferForm.patchValue({ image: imageFile });
+}
+```
+
+<br><br>
+
+### **Storing the Image in the Form** <span id="i1413"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+NewOfferPage
+
+```ts
+if (!this.newOfferForm.valid || !this.newOfferForm.get("image").value) {
+  return;
+}
+
+onCreateOffer() {
+  if (!this.newOfferForm.valid || !this.newOfferForm.get('image').value) {
+    return;
+  }
+}
+```
+
+```html
+<ion-button
+  (click)="onCreateOffer()"
+  type="submit"
+  [disabled]="!newOfferForm.valid || !newOfferForm.get('image').value"
+></ion-button>
+```
+
+<br>
+
+ImagePicker
+
+```html
+<input
+  type="file"
+  accept="image/jpeg"
+  *ngIf="usePicker"
+  #filePicker
+  (change)="onFileChosen($event)"
+/>
+```
+
+<br><br>
+
+### **Capacitor v1 & PWA Elements** <span id="i1414"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+With Capacitor version 1, you add the PWA Elements, which we'll add in the next lecture, slightly different. Check your project package.json file to find out if you're using Capacitor version 1 (i.e. without any "beta" flag etc).
+
+1. You no longer need to manually add a script import to index.html (i.e. manually adding `<script src="https://unpkg.com/@ionic/pwa-elements@1.0.1/dist/ionicpwaelements.js"> is not required!)`.
+
+2. In your `main.ts` file, add this import:
+
+```ts
+import { defineCustomElements } from "@ionic/pwa-elements/loader";
+```
+
+and call this method
+
+```ts
+defineCustomElements(window);
+```
+
+after `platformBrowserDynamic().bootstrapModule(AppModule)...`
+
+Also see: https://capacitorjs.com/docs/web/pwa-elements#installation
+
+<br>
+
+`main.ts`:
+
+```ts
+import { defineCustomElements } from "@ionic/pwa-elements/loader";
+
+// ...
+
+// Call the element loader after the platform has been bootstrapped
+defineCustomElements(window);
+```
+
+<br><br>
+
+### **Using PWA Elements** <span id="i1415"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+- Installation - see last subsection
+
+ImagePicker
+
+```ts
+// ...
+onPickImage() {
+  if (!Capacitor.isPluginAvailable('Camera') || !Camera) {
+    this.filePicker.nativeElement.click(); // execute a click
+    return;
+  }
+
+  Camera.getPhoto({
+      // ...
+  })
+    .then((image) => {
+      // ...
+
+    })
+    .catch((error) => {
+      console.log(error);
+      if (this.usePicker) {
+        this.filePicker.nativeElement.click();
+      }
+      return false;
+    });
+}
+```
+
+#### **Customizing pwa-action-sheet**:
+
+- https://capacitorjs.com/docs/apis/action-sheet#example
+
+<br><br>
+
+### **Improving the ImagePicker Compponent** <span id="i1416"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+ImagePicker, LocationPicker
+
+```ts
+@Input() showPreview = false;
+```
+
+```html
+<!-- LocationPicker -->
+<ion-img
+  role="button"
+  class="location-image"
+  (click)="onPickLocation()"
+  [src]="selectedLocationImage"
+  *ngIf="selectedLocationImage && !isLoading && showPreview"
+></ion-img>
+
+<!-- ImagePicker -->
+<ion-img
+  role="button"
+  class="image"
+  (click)="onPickImage()"
+  [src]="selectedImage"
+  *ngIf="selectedImage && showPreview"
+></ion-img>
+<ion-button></ion-button>
+```
+
+<br>
+
+NewOfferPage
+
+```html
+<ion-row>
+  <ion-col size-sm="6" offset-sm="3">
+    <app-location-picker
+      [showPreview]="newOfferForm.get('location').value"
+      (locationPick)="onLocationPicked($event)"
+    ></app-location-picker>
+  </ion-col>
+</ion-row>
+<ion-row>
+  <ion-col size-sm="6" offset-sm="3">
+    <app-image-picker
+      [showPreview]="newOfferForm.get('image').value"
+      (imagePick)="onImagePicked($event)"
+    ></app-image-picker>
+  </ion-col>
+</ion-row>
+```
+
+<br>
+
+ImagePicker
+
+```html
+<ion-button
+  color="primary"
+  (click)="onPickImage()"
+  *ngIf="!selectedImage || !showPreview"
+>
+  <ion-icon name="camera" slot="start"> </ion-icon>
+  <ion-label> Take Picture </ion-label>
+</ion-button>
+```
+
+LocationPicker
+
+```html
+<ion-button
+  color="primary"
+  (click)="onPickLocation()"
+  *ngIf="(!selectedLocationImage && !isLoading) || !showPreview"
+>
+  <ion-icon name="map" slot="start"> </ion-icon>
+  <ion-label> Select Location </ion-label>
+</ion-button>
+```
+
+<br><br>
+
+### **MUST READ: Firebase Cloud Functions Billing** <span id="i1417"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+In the next lecture, we'll write some server-side code which we need. We'll do that with a feature called "Firebase Cloud Functions", the following text refers to that feature and to what we'll do in the next lecture.
+
+**Please read it carefully if you plan on following along in code!**
+
+Especially consider the below notes **before you deploy the function** we created in the next lecture via `firebase deploy`!
+
+---
+
+Generally, Firebase Cloud Functions - a feature we're going to use in the next lecture - are part of Firebase' free tier and you can get started with them for free.
+
+Starting on **June 22nd 2020**, you need a billing account (i.e. also a credit card though) if you're cloud function should run with Node.js v10. So you need a **credit card** to create such a billing account.
+
+This **does not mean that you're going to be billed** for the function execution though! As long as you stay within the free tier, you'll **NOT be billed** (see: https://firebase.google.com/support/faq#expandable-19).
+
+There is one exception though - you can expect a very small charge per month if you deployed your functions - also see https://firebase.google.com/support/faq#expandable-19.
+
+---
+
+**If you don't have a credit card and/ or you don't want to incur that small charge**, you can't use cloud functions with Node 10 unfortunately.
+
+For the moment, **you could use Node 8** instead of Node 10 and you should be able to deploy without a credit card (and without being billed therefore).
+
+You set the Node version in the `functions/package.json` file (which will be created in the next lecture) like this:
+
+```json
+"engines": {"node": "8"}
+```
+
+Simply add that key-value pair to the `functions/package.json` file.
+
+However, **support for Node 8 will end on February 15th 2021** - see: https://firebase.google.com/support/faq#functions-pricing
+
+Thereafter, you need to use Node 10 and hence you need to use a credit card.
+
+<br><br>
+
+### **Adding Server-side Image Uploading Code** <span id="i1418"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+Firebase tools: https://github.com/firebase/firebase-tools
+
+<br>
+
+CLI:
+
+- `firebase init`
+
+<br>
+
+Firebase Cloud Functions: https://firebase.google.com/docs/functions/
+
+Firebase Cloud Functions tutorial: https://academind.com/tutorials/firebase-cloud-functions
+
+<br>
+
+Functions (index.js):
+
+- replace `YOUR_FIREBASE_PROJECT_ID` with your project's ID
+
+```ts
+const functions = require("firebase-functions");
+const cors = require("cors")({ origin: true });
+const Busboy = require("busboy");
+const os = require("os");
+const path = require("path");
+const fs = require("fs");
+const uuid = require("uuid/v4");
+
+const { Storage } = require("@google-cloud/storage");
+
+const storage = new Storage({
+  projectId: "ionic-angular-course-i",
+});
+
+exports.storeImage = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(500).json({ message: "Not allowed." });
+    }
+    const busboy = new Busboy({ headers: req.headers });
+    let uploadData;
+    let oldImagePath;
+
+    busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+      const filePath = path.join(os.tmpdir(), filename);
+      uploadData = { filePath: filePath, type: mimetype, name: filename };
+      file.pipe(fs.createWriteStream(filePath));
+    });
+
+    busboy.on("field", (fieldname, value) => {
+      oldImagePath = decodeURIComponent(value);
+    });
+
+    busboy.on("finish", () => {
+      const id = uuid();
+      let imagePath = "images/" + id + "-" + uploadData.name;
+      if (oldImagePath) {
+        imagePath = oldImagePath;
+      }
+
+      console.log(uploadData.type);
+      return storage
+        .bucket("ionic-angular-course-i.appspot.com")
+        .upload(uploadData.filePath, {
+          uploadType: "media",
+          destination: imagePath,
+          metadata: {
+            metadata: {
+              contentType: uploadData.type,
+              firebaseStorageDownloadTokens: id,
+            },
+          },
+        })
+
+        .then(() => {
+          return res.status(201).json({
+            imageUrl:
+              "https://firebasestorage.googleapis.com/v0/b/" +
+              storage.bucket("ionic-angular-course-i.appspot.com").name +
+              "/o/" +
+              encodeURIComponent(imagePath) +
+              "?alt=media&token=" +
+              id,
+            imagePath: imagePath,
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+          return res.status(401).json({ error: "Unauthorized!" });
+        });
+    });
+    return busboy.end(req.rawBody);
+  });
+});
+```
+
+functions/package.json:
+
+```json
+"dependencies": {
+  "firebase-admin": "^10.0.2",
+  "firebase-functions": "^3.18.0",
+  "@google-cloud/storage": "^2.3.4",
+  "busboy": "^0.2.14",
+  "cors": "^2.8.4",
+  "uuid": "^3.2.1"
+},
+```
+
+- `cd functions`
+- `npm install`
+
+<br>
+
+- `firebase deploy`
+
+<br><br>
+
+### **Adding Image Upload** <span id="i1419"></span><a href="#t14">&#8593;</a>
+
+<br>
+
+- https://console.firebase.google.com/project/Your-Project-Name/functions
+
+<br>
+
+PlacesService
+
+```ts
+uploadImage(image: File) {
+  const uploadData = new FormData();
+  uploadData.append('image', image);
+
+  return this.http.post<{ imageUrl: string; imagePath: string }>(
+    environment.firebaseStorageImageFunctionAPIUrl,
+    uploadData
+  );
+}
+```
+
+<br>
+
+NewOfferPage
+
+```ts
+onCreateOffer() {
+  if (!this.newOfferForm.valid || !this.newOfferForm.get('image').value) {
+    return;
+  }
+  console.log(this.newOfferForm.value);
+
+  this.loadingCtrl
+    .create({
+      message: 'Creating place...',
+    })
+    .then((loadingEl) => {
+      loadingEl.present();
+      this.placesService
+        .uploadImage(this.newOfferForm.get('image').value)
+        .pipe(
+          switchMap((uploadResponse) => {
+            return this.placesService.addPlace(
+              this.newOfferForm.value.title,
+              this.newOfferForm.value.description,
+              +this.newOfferForm.value.price,
+              new Date(this.newOfferForm.value.dateFrom),
+              new Date(this.newOfferForm.value.dateTo),
+              this.newOfferForm.value.location,
+              uploadResponse.imageUrl
+            );
+          })
+        )
+        .subscribe((places) => {
+          this.loadingCtrl.dismiss();
+          this.newOfferForm.reset();
+          this.router.navigate(['/places/tabs/offers']);
+        });
+    });
+}
+```
+
+<br>
+
+LocationPicker
+
+```html
+<ion-button
+  color="primary"
+  (click)="onPickLocation()"
+  *ngIf="(!selectedLocationImage || !showPreview) && !isLoading"
+>
+  <ion-icon name="map" slot="start"> </ion-icon>
+  <ion-label> Select Location </ion-label>
+</ion-button>
+```
 
 <br><br>
 
