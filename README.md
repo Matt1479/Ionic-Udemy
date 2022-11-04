@@ -7927,3 +7927,7 @@ You can deploy it to Firebase, or you can also deploy it to any static website h
 <br><br>
 
 <hr>
+
+Optional Next Steps: Progressive Web Apps, Web Components
+
+<hr>
