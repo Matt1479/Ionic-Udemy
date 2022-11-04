@@ -36,6 +36,8 @@
 
 ### <a href="#t14">**Section 14: Using Native Device Features (Camera & Location)**</a>
 
+### <a href="#t15">**Section 15: Adding Authentication**</a>
+
 </nav>
 
 <br><br>
@@ -6360,3 +6362,1295 @@ LocationPicker
 <br><br>
 
 <hr>
+
+<br><br>
+
+## **Section 15: Adding Authentication** <a href="#navi">&#8593;</a> <span id="t15"></span>
+
+<br><br>
+
+1. <a href="#i1500">Introduction</a>
+2. <a href="#i1501">How Authentication Works</a>
+3. <a href="#i1502">Adding User Signup</a>
+4. <a href="#i1503">Adding User Login</a>
+5. <a href="#i1504">Managing the User with a Subject</a>
+6. <a href="#i1505">Storing the Token in Memory</a>
+7. <a href="#i1506">Using the ID Observable Correctly</a>
+8. <a href="#i1507">Using the userId Everywhere</a>
+9. <a href="#i1508">IMPORTANT: Storing Auth Data in Device Storage</a>
+10. <a href="#i1509">IMPORTANT: Retrieving Auth Data in Device Storage & Adding Autologin</a>
+11. <a href="#i1510">Using Autologin</a>
+12. <a href="#i1511">IMPORTANT: REMOVING data from Capacitor's Data Storage & Adding a Reactive Logout System</a>
+13. <a href="#i1512">Adding Autologout</a>
+14. <a href="#i1513">Requiring the Auth Token on the Backend</a>
+15. <a href="#i1514">Sending the Auth Token to the Backend</a>
+16. <a href="#i1515">Optional: Check Auth State When App Resumes</a>
+17. <a href="#i1516">Useful Resources & Links</a>
+
+<br><br>
+
+### **Introduction** <span id="i1500"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+In this module:
+
+- How Authentication Works
+- Adding Authentication
+- Managing the Auth Token
+
+<br><br>
+
+### **How Authentication Works** <span id="i1501"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+<img src="./img/how-auth-works.png" alt="how-auth-works">
+
+<br><br>
+
+### **Adding User Signup** <span id="i1502"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+Firebase Auth REST API: https://firebase.google.com/docs/reference/rest/auth
+
+<br>
+
+AuthPage
+
+```ts
+constructor(
+  private authService: AuthService,
+  private router: Router,
+  private loadingController: LoadingController,
+  private alertCtrl: AlertController
+) {}
+
+ngOnInit() {}
+
+authenticate(email: string, password: string) {
+  this.isLoading = true;
+  this.authService.login();
+  this.loadingController
+    .create({
+      keyboardClose: true,
+      spinner: 'bubbles',
+      message: 'Logging in...',
+    })
+    .then((loadingEl) => {
+      loadingEl.present();
+      this.authService.signup(email, password).subscribe({
+        next: (resData) => {
+          console.log(resData);
+          loadingEl.dismiss();
+          this.router.navigate(['/places/tabs/discover']);
+          this.isLoading = false;
+        },
+        error: (errRes) => {
+          loadingEl.dismiss();
+          const code = errRes.error.error.message;
+          let message;
+          if (code === 'EMAIL_EXISTS') {
+            message = ErrorCodeEnum.EMAIL_EXISTS;
+          } else if (code === 'EMAIL_NOT_FOUND') {
+            message = ErrorCodeEnum.EMAIL_NOT_FOUND;
+          } else {
+            message = 'An unknown error has occurred';
+          }
+          this.showAlert(message);
+        },
+      });
+    });
+}
+
+onSwitchAuthMode() {
+  this.isLogin = !this.isLogin;
+}
+
+onSubmit(form: NgForm) {
+  if (!form.valid) {
+    return;
+  }
+
+  const email = form.value.email;
+  const password = form.value.password;
+
+  if (this.isLogin) {
+    // Send a request to login servers
+  } else {
+    // Send a request to signup servers
+    this.authenticate(email, password);
+  }
+}
+
+private showAlert(message: string) {
+  this.alertCtrl
+    .create({
+      header: 'Authentication failed',
+      message: message,
+      buttons: ['Okay'],
+    })
+    .then((alertEl) => alertEl.present());
+}
+```
+
+<br>
+
+AuthService
+
+```ts
+signup(email: string, password: string) {
+  return this.http.post<AuthResponseData>(
+    'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' +
+      environment.firebaseWebAPIKey,
+    { email, password, returnSecureToken: true }
+  );
+}
+```
+
+<br><br>
+
+### **Adding User Login** <span id="i1503"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+AuthService
+
+```ts
+login(email: string, password: string) {
+  return this.http.post<AuthResponseData>(
+    'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' +
+      environment.firebaseWebAPIKey,
+    { email, password, returnSecureToken: true }
+  );
+}
+```
+
+AuthPage
+
+```ts
+authenticate(email: string, password: string) {
+  this.isLoading = true;
+  this.loadingController
+    .create({
+      keyboardClose: true,
+      spinner: 'bubbles',
+      message: 'Logging in...',
+    })
+    .then((loadingEl) => {
+      loadingEl.present();
+      let authObs: Observable<AuthResponseData>;
+      if (this.isLogin) {
+        authObs = this.authService.login(email, password);
+      } else {
+        authObs = this.authService.signup(email, password);
+      }
+      authObs.subscribe({
+        next: (resData) => {
+          console.log(resData);
+          loadingEl.dismiss();
+          this.router.navigate(['/places/tabs/discover']);
+          this.isLoading = false;
+        },
+        error: (errRes) => {
+          loadingEl.dismiss();
+          const code = errRes.error.error.message;
+          let message;
+          // could be improved with iteration on Object's keys
+          if (code === 'EMAIL_EXISTS') {
+            message = ErrorCodeEnum.EMAIL_EXISTS;
+          } else if (code === 'EMAIL_NOT_FOUND') {
+            message = ErrorCodeEnum.EMAIL_NOT_FOUND;
+          } else if (code === 'INVALID_PASSWORD') {
+            message = ErrorCodeEnum.INVALID_PASSWORD;
+          } else {
+            message = 'An unknown error has occurred';
+          }
+          this.showAlert(message);
+        },
+      });
+    });
+}
+```
+
+<br><br>
+
+### **Managing the User with a Subject** <span id="i1504"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+UserModel
+
+```ts
+export class User {
+  constructor(
+    public id: string,
+    public email: string,
+    private _token: string,
+    private tokenExpirationDate: Date
+  ) {}
+
+  get token() {
+    if (!this.tokenExpirationDate || this.tokenExpirationDate <= new Date()) {
+      return null;
+    }
+    return this._token;
+  }
+}
+```
+
+AuthService
+
+```ts
+  private _user = new BehaviorSubject<User>(null);
+
+  constructor(private http: HttpClient) {}
+
+  signup(email: string, password: string) {
+    return this.http.post<AuthResponseData>(
+      'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' +
+        environment.firebaseWebAPIKey,
+      { email, password, returnSecureToken: true }
+    );
+  }
+
+  get userIsAuthenticated() {
+    // return user if we have token
+    return this._user.asObservable().pipe(
+      map((user) => {
+        if (user) {
+          return !!user.token;
+        } else {
+          return false;
+        }
+      })
+    );
+  }
+
+  get userId() {
+    return this._user.asObservable().pipe(
+      map((user) => {
+        if (user) {
+          return user.id;
+        } else {
+          return null;
+        }
+      })
+    );
+  }
+
+  // login() ...
+
+  logout() {
+    this._user.next(null);
+  }
+```
+
+<br><br>
+
+### **Storing the Token in Memory** <span id="i1505"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+```ts
+signup(email: string, password: string) {
+  return this.http
+    .post<AuthResponseData>(
+      'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' +
+        environment.firebaseWebAPIKey,
+      { email, password, returnSecureToken: true }
+    )
+    .pipe(tap((userData) => this.setUserData(userData))); // here
+}
+
+get userIsAuthenticated() {
+  // return user if we have token
+  return this._user.asObservable().pipe(
+    map((user) => {
+      if (user) {
+        return !!user.token;
+      } else {
+        return false;
+      }
+    })
+  );
+}
+
+get userId() {
+  return this._user.asObservable().pipe(
+    map((user) => {
+      if (user) {
+        return user.id;
+      } else {
+        return null;
+      }
+    })
+  );
+}
+
+login(email: string, password: string) {
+  return this.http
+    .post<AuthResponseData>(
+      'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' +
+        environment.firebaseWebAPIKey,
+      { email, password, returnSecureToken: true }
+    )
+    .pipe(tap((userData) => this.setUserData(userData))); // here
+}
+
+logout() {
+  this._user.next(null);
+}
+
+private setUserData(userData: AuthResponseData) {
+  // generate timestamp: 1 hour from now
+  // new Date().getTime() - current time in ms
+  const expirationTime = new Date(
+    new Date().getTime() + +userData.expiresIn * 1000
+  );
+  this._user.next(
+    new User(
+      userData.localId,
+      userData.email,
+      userData.idToken,
+      expirationTime
+    )
+  );
+}
+```
+
+<br><br>
+
+### **Using the ID Observable Correctly** <span id="i1506"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+BookingsService
+
+```ts
+addBooking(
+  placeId: string,
+  placeTitle: string,
+  placeImage: string,
+  firstName: string,
+  lastName: string,
+  guestNumber: number,
+  dateFrom: Date,
+  dateTo: Date
+) {
+  let generatedId: string;
+  let newBooking: Booking;
+  return this.authService.userId.pipe(
+    take(1),
+    switchMap((userId) => {
+      if (!userId) {
+        throw new Error('No user id found!');
+      }
+      newBooking = new Booking(
+        Math.random().toString(),
+        placeId,
+        userId,
+        placeTitle,
+        placeImage,
+        firstName,
+        lastName,
+        guestNumber,
+        dateFrom,
+        dateTo
+      );
+
+      return this.http.post<{ name: string }>(
+        environment.firebaseAPIUrl + 'bookings.json',
+        {
+          ...newBooking,
+          id: null,
+        }
+      );
+    }),
+    switchMap((resData) => {
+      generatedId = resData.name;
+      return this.bookings;
+    }),
+    take(1),
+    tap((bookings) => {
+      newBooking.id = generatedId;
+      this._bookings.next(bookings.concat(newBooking));
+    })
+  );
+}
+```
+
+<br>
+
+DiscoverPage
+
+```ts
+onFilterUpdate(event: Event) {
+  this.authService.userId.pipe(take(1)).subscribe((userId) => {
+    if (
+      (event as CustomEvent<SegmentChangeEventDetail>).detail.value === 'all'
+    ) {
+      this.relevantPlaces = this.loadedPlaces;
+      this.listedLoadedPlaces = this.relevantPlaces?.slice(1);
+    } else {
+      this.relevantPlaces = this.loadedPlaces.filter(
+        (place) => place.userId !== userId
+      );
+      this.listedLoadedPlaces = this.relevantPlaces?.slice(1);
+    }
+  });
+}
+```
+
+<br>
+
+PlaceDetailPage
+
+```ts
+ngOnInit() {
+  this.activatedRoute.params.subscribe((params) => {
+    if (!params.placeId) {
+      this.navController.navigateBack('/places/tabs/discover');
+    }
+    this.isLoading = true;
+    let fetchedUserId: string;
+    this.subscription = this.authService.userId
+      .pipe(
+        switchMap((userId) => {
+          if (!userId) {
+            throw new Error('Found no user!');
+          }
+          fetchedUserId = userId;
+          return this.placesService.getPlace(params.placeId);
+        })
+      )
+      .subscribe({
+        next: (place) => {
+          this.place = place;
+          this.isBookable = place.userId !== fetchedUserId;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          this.alertCtrl
+            .create({
+              header: 'An error occurred!',
+              message: 'Could not load place.',
+              buttons: [
+                {
+                  text: 'Okay',
+                  handler: () => {
+                    this.router.navigate(['/places/tabs/discover']);
+                  },
+                },
+              ],
+            })
+            .then((alertEl) => {
+              alertEl.present();
+            });
+        },
+      });
+  });
+}
+```
+
+<br>
+
+PlacesService
+
+```ts
+addPlace(
+  title: string,
+  description: string,
+  price: number,
+  dateFrom: Date,
+  dateTo: Date,
+  location: PlaceLocation,
+  imageUrl: string
+) {
+  let generatedId: string;
+  let newPlace: Place;
+  return this.authService.userId.pipe(
+    // get 1 userId (then complete) - do not set up an ongoing subscription
+    take(1),
+    switchMap((userId) => {
+      if (!userId) {
+        throw new Error('No user found');
+      }
+      newPlace = new Place(
+        Math.random().toString(),
+        title,
+        description,
+        imageUrl,
+        price,
+        dateFrom,
+        dateTo,
+        userId,
+        location
+      );
+
+      return this.http.post<{ name: string }>(
+        environment.firebaseAPIUrl + 'offered-places.json',
+        {
+          ...newPlace,
+          id: null,
+        }
+      );
+    }),
+    // switchMap takes the existing Observable chain
+    // and result of that chain (resData)
+    // then it returns a new Observable that replaces the old Observable
+    // and the cycle continues - so you can run code on both Observables
+    switchMap((resData) => {
+      // get the id from firebase
+      generatedId = resData.name;
+      return this.places;
+    }),
+    // take(1) place
+    take(1),
+    tap((places) => {
+      // we're working with places array because of to switchMap
+      newPlace.id = generatedId;
+      this._places.next(places.concat(newPlace));
+    })
+  );
+  // take(1) - (emit provided number of values, then complete) - emit current latest list of places, then complete
+}
+```
+
+<br><br>
+
+### **Using the userId Everywhere** <span id="i1507"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+AuthGuard
+
+```ts
+import { Injectable } from "@angular/core";
+import { CanLoad, Route, Router, UrlSegment, UrlTree } from "@angular/router";
+import { Observable } from "rxjs";
+import { take, tap } from "rxjs/operators";
+import { AuthService } from "./auth.service";
+
+@Injectable({
+  providedIn: "root",
+})
+export class AuthGuard implements CanLoad {
+  constructor(private authService: AuthService, private router: Router) {}
+
+  canLoad(
+    route: Route,
+    segments: UrlSegment[]
+  ):
+    | boolean
+    | UrlTree
+    | Observable<boolean | UrlTree>
+    | Promise<boolean | UrlTree> {
+    return this.authService.userIsAuthenticated.pipe(
+      // sub, take 1, complete
+      take(1),
+      tap((isAuthenticated) => {
+        if (!isAuthenticated) {
+          this.router.navigate(["/auth"]);
+        }
+      })
+    );
+  }
+}
+```
+
+<br>
+
+BookingsService
+
+```ts
+fetchBookings() {
+  return this.authService.userId.pipe(
+    switchMap((userId) => {
+      if (!userId) {
+        throw new Error('User not found!');
+      }
+      return this.http.get<{ [key: string]: BookingData }>(
+        // orderBy="userId"
+        // equalTo="${this.authService.userId}"
+        environment.firebaseAPIUrl +
+          `bookings.json?orderBy="userId"&equalTo="${userId}"`
+      );
+    }),
+    map((bookingData) => {
+      const bookings = [];
+      for (const key in bookingData) {
+        if (bookingData.hasOwnProperty(key)) {
+          bookings.push(
+            new Booking(
+              key,
+              bookingData[key].placeId,
+              bookingData[key].userId,
+              bookingData[key].placeTitle,
+              bookingData[key].placeImage,
+              bookingData[key].firstName,
+              bookingData[key].lastName,
+              bookingData[key].guestNumber,
+              new Date(bookingData[key].bookedFrom),
+              new Date(bookingData[key].bookedTo)
+            )
+          );
+        }
+      }
+      return bookings;
+    }),
+    tap((bookings) => {
+      this._bookings.next(bookings);
+    })
+  );
+}
+```
+
+<br><br>
+
+### **IMPORTANT: Storing Auth Data in Device Storage** <span id="i1508"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+In normal Web Apps we use `localStorage`. That is not the case in Mobile Apps - Web API localStorage is not reliable (it's transient - which means it will be lost eventually). That's why we use Capacitor's Data Storage.
+
+Note: It's only usable for small data, for large data or high performance storage you would want to use SQLite (or other DBMS).
+
+<br>
+
+---
+
+Capacitorjs - Storage: https://capacitorjs.com/docs/guides/storage
+
+---
+
+<br>
+
+- run:
+
+```
+npm install @capacitor/preferences
+npx cap sync
+```
+
+<br>
+
+```ts
+// ...
+import { Preferences } from '@capacitor/preferences';
+// ...
+// ...  { } ...
+  private setUserData(userData: AuthResponseData) {
+    const expirationTime = new Date(
+      new Date().getTime() + +userData.expiresIn * 1000
+    );
+    // ...
+    this.storeAuthData(
+      userData.localId,
+      userData.idToken,
+      expirationTime.toISOString()
+    );
+  }
+
+  private storeAuthData(
+    userId: string,
+    token: string,
+    tokenExpirationDate: string
+  ) {
+    // JSON.stringify() - convert Object into a string
+    const data = JSON.stringify({ userId, token, tokenExpirationDate });
+    Preferences.set({
+      key: 'authData',
+      value: data,
+    });
+  }
+```
+
+<br><br>
+
+### **IMPORTANT: Retrieving Auth Data in Device Storage & Adding Autologin** <span id="i1509"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+AuthService
+
+```ts
+autoLogin() {
+  // convert Promise into an Observable
+  return from(Preferences.get({ key: 'authData' })).pipe(
+    map((storedData) => {
+      if (!storedData || !storedData.value) {
+        return null;
+      }
+      // convert string back into Object
+      const parsedData = JSON.parse(storedData.value) as {
+        token: string;
+        tokenExpirationDate: string;
+        userId: string;
+        email: string;
+      };
+      const expirationTime = new Date(parsedData.tokenExpirationDate);
+      // expirationTime is in the past - expired
+      if (expirationTime <= new Date()) {
+        return null;
+      }
+      const user = new User(
+        parsedData.userId,
+        parsedData.email,
+        parsedData.token,
+        expirationTime
+      );
+      return user;
+    }),
+    tap((user) => {
+      if (user) {
+        this._user.next(user);
+      }
+    }),
+    map((user) => {
+      return !!user;
+    })
+  );
+}
+
+private storeAuthData(
+  userId: string,
+  token: string,
+  tokenExpirationDate: string,
+  email: string
+) {
+  // JSON.stringify() - convert Object into a string
+  const data = JSON.stringify({ userId, token, tokenExpirationDate, email });
+  Preferences.set({
+    key: 'authData',
+    value: data,
+  }).then(() => console.log('Successfully stored'));
+}
+```
+
+<br><br>
+
+### **Using Autologin** <span id="i1510"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+AuthGuard
+
+```ts
+canLoad(
+  route: Route,
+  segments: UrlSegment[]
+):
+  | boolean
+  | UrlTree
+  | Observable<boolean | UrlTree>
+  | Promise<boolean | UrlTree> {
+  return this.authService.userIsAuthenticated.pipe(
+    // sub, take 1, complete
+    take(1),
+    switchMap((isAuthenticated) => {
+      if (!isAuthenticated) {
+        return this.authService.autoLogin();
+      } else {
+        return of(isAuthenticated);
+      }
+    }),
+    tap((isAuthenticated) => {
+      if (!isAuthenticated) {
+        this.router.navigate(['/auth']);
+      }
+    })
+  );
+}
+```
+
+<br>
+
+- Checking the Local Storage: Console -> Application -> Local Storage -> localhost
+
+<br><br>
+
+### **Adding a Reactive Logout System** <span id="i1511"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+#### **REMOVING data from Capacitor's Data Storage**
+
+AuthService
+
+```ts
+logout() {
+  this._user.next(null);
+  Preferences.remove({ key: this.storageAuthDataKey }); // or clear() to clear everything
+}
+```
+
+<br>
+
+AppComponent
+
+```ts
+private previousAuthState = false;
+
+ngOnInit(): void {
+  this.subscription = this.authService.userIsAuthenticated.subscribe(
+    (isAuth) => {
+      // if we're not authenticated and previously we were authenticated then...
+      if (!isAuth && this.previousAuthState !== isAuth) {
+        this.router.navigate(['/auth']);
+      }
+      this.previousAuthState = isAuth;
+    }
+  );
+}
+
+onLogout() {
+  this.authService.logout();
+}
+
+ngOnDestroy(): void {
+  if (this.subscription) {
+    this.subscription.unsubscribe();
+  }
+}
+```
+
+<br>
+
+PlaceDetailPage / BookingsService
+
+```ts
+// add take(1) (ngOnInit)
+this.subscription = this.authService.userId.pipe(
+  take(1)
+  // ...
+);
+```
+
+<br>
+
+AuthPage: (onSubmit) `form.reset();`
+
+<br><br>
+
+### **Adding Autologout** <span id="i1512"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+AuthService
+
+```ts
+  // ...
+  private activeLogoutTimer: any;
+  // ...
+
+  autoLogin() {
+    return from(Preferences.get({ key: this.storageAuthDataKey })).pipe(
+      map((storedData) => {
+        // ...
+        // ...
+        // ...
+      }),
+      tap((user) => {
+        if (user) {
+          // ...
+          this.autoLogout(user.tokenDuration); // here
+        }
+      }),
+      map((user) => {
+        // ...
+      })
+    );
+  }
+
+  signup(email: string, password: string) {
+    // ...
+  }
+
+  // ...
+  // ...
+
+  logout() {
+    // remove any existing logout timers
+    if (this.activeLogoutTimer) {
+      clearTimeout(this.activeLogoutTimer);
+    }
+    this._user.next(null);
+    Preferences.remove({ key: this.storageAuthDataKey }); // or clear() to clear everything
+  }
+
+  private autoLogout(duration: number) {
+    // when setting a new logoutTimer - clear the existing one
+    if (this.activeLogoutTimer) {
+      clearTimeout(this.activeLogoutTimer);
+    }
+    this.activeLogoutTimer = setTimeout(() => {
+      this.logout();
+    }, duration);
+  }
+
+  private setUserData(userData: AuthResponseData) {
+    // ...
+    const user = new User(
+      userData.localId,
+      userData.email,
+      userData.idToken,
+      expirationTime
+    );
+    this._user.next(user);
+    this.autoLogout(user.tokenDuration); // here
+    // ...
+  }
+
+  // ...
+
+  ngOnDestroy(): void {
+    // whenever this service gets destroyed - clear timeouts
+    if (this.activeLogoutTimer) {
+      clearTimeout(this.activeLogoutTimer);
+    }
+  }
+}
+
+```
+
+<br>
+
+UserModel
+
+```ts
+get tokenDuration() {
+  if (!this.token) {
+    return 0;
+  }
+  // future timestamp - present timestamp
+  // if negative or 0 - it expired
+  return this.tokenExpirationDate.getTime() - new Date().getTime();
+}
+```
+
+<br><br>
+
+### **Requiring the Auth Token on the Backend** <span id="i1513"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+Realtime Database:
+
+```json
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "bookings": {
+      ".indexOn": ["userId"]
+    }
+  }
+}
+```
+
+Storage:
+
+```conf
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+<br>
+
+Project Settings -> Service Accounts -> Generate
+
+<br>
+
+functions/index.js
+
+```js
+const fbAdmin = require("firebase-admin");
+
+// ...
+
+fbAdmin.initializeApp({
+  credential: fbAdmin.credential.cert(
+    require("./ionic-app-firebase-admin.json")
+  ),
+});
+
+// ...
+
+    if (
+      !req.headers.authorization ||
+      !req.headers.authorization.startsWith("Bearer ")
+    ) {
+      return res.startus(401).json({ error: "Unauthorized!" });
+    }
+
+    let idToken;
+    idToken = req.header.authorization.split('Bearer ')[1];
+
+    // ...
+
+  return fbAdmin
+    .auth()
+    .verifyIdToken(idToken)
+    .then((decodedToken) => {
+      // ...
+    }
+```
+
+<br><br>
+
+### **Sending the Auth Token to the Backend** <span id="i1514"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+AuthService
+
+```ts
+get token() {
+  return this._user.asObservable().pipe(
+    map((user) => {
+      if (user) {
+        return user.token;
+      } else {
+        return null;
+      }
+    })
+  );
+}
+```
+
+<br>
+
+PlacesService
+
+```ts
+// ...
+
+export class PlacesService {
+  private _places = new BehaviorSubject<Place[]>([]);
+
+  constructor(private authService: AuthService, private http: HttpClient) {}
+
+  fetchPlaces() {
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
+        return this.http.get<{ [key: string]: PlaceData }>(
+          environment.firebaseAPIUrl + "offered-places.json?auth=" + token
+        );
+      })
+      // ...
+    );
+  }
+
+  // ...
+
+  getPlace(id: string) {
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
+        return this.http.get<PlaceData>(
+          environment.firebaseAPIUrl + `offered-places/${id}.json?auth=${token}`
+        );
+      })
+      // ...
+    );
+  }
+
+  uploadImage(image: File) {
+    const uploadData = new FormData();
+    uploadData.append("image", image);
+
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
+        return this.http.post<{ imageUrl: string; imagePath: string }>(
+          environment.firebaseStorageImageFunctionAPIUrl,
+          uploadData,
+          { headers: { Authorization: "Bearer " + token } }
+        );
+      })
+    );
+  }
+
+  addPlace() {
+    // ...
+    // ...
+    return this.authService.userId.pipe(
+      // ...
+      take(1),
+      switchMap((token) => {
+        // ...
+        return this.http.post<{ name: string }>(
+          environment.firebaseAPIUrl + "offered-places.json?auth=" + token,
+          {
+            ...newPlace,
+            id: null,
+          }
+        );
+      })
+      // ...
+    );
+  }
+
+  updatePlace(placeId: string, title: string, description: string) {
+    // ...
+    return this.http.put(
+      environment.firebaseAPIUrl +
+        `offered-places/${placeId}.json?auth=${fetchedToken}`,
+      { ...updatedPlaces[updatedPlaceIndex], id: null }
+    );
+    // ...
+  }
+}
+```
+
+<br>
+
+BookingsService
+
+```ts
+// ...
+export class BookingsService {
+  // ...
+
+  addBooking() {
+    // ...
+    // ...
+    let fetchedUserId: string;
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap((userId) => {
+        if (!userId) {
+          throw new Error("No user id found!");
+        }
+        fetchedUserId = userId;
+        return this.authService.token;
+      }),
+      take(1),
+      switchMap((token) => {
+        // ...
+        return this.http.post<{ name: string }>(
+          environment.firebaseAPIUrl + "bookings.json?auth=" + token,
+          {
+            ...newBooking,
+            id: null,
+          }
+        );
+      })
+      // ...
+    );
+  }
+
+  cancelBooking(bookingId: string) {
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
+        return this.http.delete(
+          environment.firebaseAPIUrl +
+            `bookings/${bookingId}.json?auth=${token}`
+        );
+      })
+      // ...
+    );
+  }
+
+  fetchBookings() {
+    let fetchedUserId: string;
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap((userId) => {
+        if (!userId) {
+          throw new Error("User not found!");
+        }
+        fetchedUserId = userId;
+        return this.authService.token.pipe(
+          take(1),
+          switchMap((token) => {
+            return this.http.get<{ [key: string]: BookingData }>(
+              // orderBy="userId"
+              // equalTo="${this.authService.userId}"
+              environment.firebaseAPIUrl +
+                `bookings.json?orderBy="userId"&equalTo="${fetchedUserId}"&auth=${token}`
+            );
+          })
+        );
+      })
+      // ...
+    );
+  }
+}
+```
+
+<br><br>
+
+### **Optional: Check Auth State When App Resumes** <span id="i1515"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+We added an "Auto Logout" functionality to the app in this module.
+
+You could also check the authentication status when the app resumes - to make sure that the user is logged out even if the app was running in the background (of course only, if the token did invalidate in the meantime).
+
+Acting when the app resumes is easy - you can use Capacitor for that:
+
+E.g. in `AppComponent`:
+
+```ts
+import { App } from '@capacitor/app';
+... // Other imports or code
+```
+
+With the `App` imported, you can set up a listener to state changes of your app (here, "state" refers to the general state of your app - i.e. if it's in the background or foreground).
+
+Still in `AppComponent`:
+
+```ts
+ngOnInit() {
+    ... // Other code
+    App.addListener('appStateChange', this.checkAuthOnResume.bind(this));
+}
+
+ngOnDestroy() {
+    if (this.authSub) {
+      this.authSub.unsubscribe();
+    }
+}
+
+private checkAuthOnResume(state: AppState) {
+    if (state.isActive) {
+      this.authService
+        .autoLogin()
+        .pipe(take(1))
+        .subscribe(success => {
+          if (!success) {
+            this.onLogout();
+          }
+        });
+    }
+  }
+```
+
+Attached, you find the course project with this feature implemented.
+
+Also see: https://capacitorjs.com/docs/apis/app
+
+<br><br>
+
+### **Useful Resources & Links** <span id="i1516"></span><a href="#t15">&#8593;</a>
+
+<br>
+
+Learn more about JSON Web Tokens: https://jwt.io/
+
+<br><br>
+
+<hr>
+
+# **TOMORROW: RE-READ IMPORTANT PARTS (e.g. Capacitor's Storage), REVIEW CODE (Optional), FIX LINKS, PUSH**

@@ -64,40 +64,60 @@
         <ion-col size-sm="6" offset-sm="3">
           <ion-item class="ion-text-center">
             <ion-label>Available from</ion-label>
-            <ion-datetime-button datetime="avlFrom"></ion-datetime-button>
+            <ion-datetime-button
+              id="avlFromTrigger"
+              datetime="avlFrom"
+            ></ion-datetime-button>
           </ion-item>
-          <ion-modal [keepContentsMounted]="true">
+          <ion-popover
+            [keepContentsMounted]="true"
+            trigger="avlFromTrigger"
+            triggerAction="click"
+            side="bottom"
+            alignment="center"
+          >
             <ng-template>
               <ion-datetime
-                preferWheel="true"
                 id="avlFrom"
-                min="2022-01-01T00:00:00"
-                max="2025-12-31T23:59:59"
-                value="2022-10-31T15:19:00+01:00"
+                presentation="date"
+                min="2022-01-01"
+                max="2025-12-31"
+                value="2022-10-31"
                 formControlName="dateFrom"
               >
               </ion-datetime>
             </ng-template>
-          </ion-modal>
+          </ion-popover>
         </ion-col>
+      </ion-row>
+      <ion-row>
         <ion-col size-sm="6" offset-sm="3">
           <ion-item class="ion-text-center">
             <ion-label>Available to</ion-label>
-            <ion-datetime-button datetime="avlTo"></ion-datetime-button>
+            <ion-datetime-button
+              id="avlToTrigger"
+              datetime="avlTo"
+            ></ion-datetime-button>
           </ion-item>
-          <ion-modal [keepContentsMounted]="true">
+          <ion-popover
+            [keepContentsMounted]="true"
+            trigger="avlToTrigger"
+            triggerAction="click"
+            side="bottom"
+            alignment="center"
+          >
             <ng-template>
               <ion-datetime
-                preferWheel="true"
                 id="avlTo"
-                min="2022-01-02T00:00:00"
-                max="2025-12-31T23:59:59"
-                value="2022-11-02T15:19:00+01:00"
+                presentation="date"
+                min="2022-01-02"
+                max="2025-12-31"
+                value="2022-11-02"
                 formControlName="dateTo"
               >
               </ion-datetime>
             </ng-template>
-          </ion-modal>
+          </ion-popover>
         </ion-col>
       </ion-row>
       <ion-row>

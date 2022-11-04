@@ -8,6 +8,7 @@ import {
   NavController,
 } from '@ionic/angular';
 import { Subscription } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 import { AuthService } from 'src/app/auth/auth.service';
 import { BookingsService } from 'src/app/bookings/bookings.service';
 import { MapModalComponent } from 'src/app/shared/map-modal/map-modal.component';
@@ -45,12 +46,22 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
         this.navController.navigateBack('/places/tabs/discover');
       }
       this.isLoading = true;
-      this.subscription = this.placesService
-        .getPlace(params.placeId)
+      let fetchedUserId: string;
+      this.subscription = this.authService.userId
+        .pipe(
+          take(1),
+          switchMap((userId) => {
+            if (!userId) {
+              throw new Error('Found no user!');
+            }
+            fetchedUserId = userId;
+            return this.placesService.getPlace(params.placeId);
+          })
+        )
         .subscribe({
           next: (place) => {
             this.place = place;
-            this.isBookable = place.userId !== this.authService.userId;
+            this.isBookable = place.userId !== fetchedUserId;
             this.isLoading = false;
           },
           error: (error) => {

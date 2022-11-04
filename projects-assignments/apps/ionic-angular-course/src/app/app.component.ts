@@ -1,15 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Platform } from '@ionic/angular';
 import { AuthService } from './auth/auth.service';
 import { SplashScreen } from '@capacitor/splash-screen';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
+  private subscription: Subscription;
+  private previousAuthState = false;
+
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -28,9 +32,25 @@ export class AppComponent {
     await SplashScreen.hide();
   }
 
+  ngOnInit(): void {
+    this.subscription = this.authService.userIsAuthenticated.subscribe(
+      (isAuth) => {
+        // if we're not authenticated and previously we were authenticated then...
+        if (!isAuth && this.previousAuthState !== isAuth) {
+          this.router.navigate(['/auth']);
+        }
+        this.previousAuthState = isAuth;
+      }
+    );
+  }
+
   onLogout() {
     this.authService.logout();
+  }
 
-    this.router.navigate(['/auth']);
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 }

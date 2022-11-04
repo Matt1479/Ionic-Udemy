@@ -61,45 +61,45 @@ export class PlacesService {
   constructor(private authService: AuthService, private http: HttpClient) {}
 
   fetchPlaces() {
-    return (
-      this.http
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
         // [key: string]: PlaceData
         // any key which is a string which value is of type PlaceData
-        .get<{ [key: string]: PlaceData }>(
-          environment.firebaseAPIUrl + 'offered-places.json'
-        )
-        .pipe(
-          // map - get the response data and return new modified data
-          // difference to switchMap - map returns a non-Observable data
-          // switchMap returns an Observable
-          map((resData) => {
-            const places = [];
-            // loop through all the keys...
-            for (const key in resData) {
-              if (resData.hasOwnProperty(key)) {
-                // for each key push a new element to an array
-                places.push(
-                  new Place(
-                    key,
-                    resData[key].title,
-                    resData[key].description,
-                    resData[key].imageUrl,
-                    resData[key].price,
-                    new Date(resData[key].availableFrom),
-                    new Date(resData[key].availableTo),
-                    resData[key].userId,
-                    resData[key].location
-                  )
-                );
-              }
-            }
-            return places;
-            // return [];
-          }),
-          tap((places: Place[]) => {
-            this._places.next(places);
-          })
-        )
+        return this.http.get<{ [key: string]: PlaceData }>(
+          environment.firebaseAPIUrl + 'offered-places.json?auth=' + token
+        );
+      }),
+      // map - get the response data and return new modified data
+      // difference to switchMap - map returns a non-Observable data
+      // switchMap returns an Observable
+      map((resData) => {
+        const places = [];
+        // loop through all the keys...
+        for (const key in resData) {
+          if (resData.hasOwnProperty(key)) {
+            // for each key push a new element to an array
+            places.push(
+              new Place(
+                key,
+                resData[key].title,
+                resData[key].description,
+                resData[key].imageUrl,
+                resData[key].price,
+                new Date(resData[key].availableFrom),
+                new Date(resData[key].availableTo),
+                resData[key].userId,
+                resData[key].location
+              )
+            );
+          }
+        }
+        return places;
+        // return [];
+      }),
+      tap((places: Place[]) => {
+        this._places.next(places);
+      })
     );
   }
 
@@ -109,32 +109,42 @@ export class PlacesService {
   }
 
   getPlace(id: string) {
-    return this.http
-      .get<PlaceData>(environment.firebaseAPIUrl + `offered-places/${id}.json`)
-      .pipe(
-        map((resData) => {
-          return new Place(
-            id,
-            resData.title,
-            resData.description,
-            resData.imageUrl,
-            resData.price,
-            new Date(resData.availableFrom),
-            new Date(resData.availableTo),
-            resData.userId,
-            resData.location
-          );
-        })
-      );
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
+        return this.http.get<PlaceData>(
+          environment.firebaseAPIUrl + `offered-places/${id}.json?auth=${token}`
+        );
+      }),
+      map((resData) => {
+        return new Place(
+          id,
+          resData.title,
+          resData.description,
+          resData.imageUrl,
+          resData.price,
+          new Date(resData.availableFrom),
+          new Date(resData.availableTo),
+          resData.userId,
+          resData.location
+        );
+      })
+    );
   }
 
   uploadImage(image: File) {
     const uploadData = new FormData();
     uploadData.append('image', image);
 
-    return this.http.post<{ imageUrl: string; imagePath: string }>(
-      environment.firebaseStorageImageFunctionAPIUrl,
-      uploadData
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
+        return this.http.post<{ imageUrl: string; imagePath: string }>(
+          environment.firebaseStorageImageFunctionAPIUrl,
+          uploadData,
+          { headers: { Authorization: 'Bearer ' + token } }
+        );
+      })
     );
   }
 
@@ -148,43 +158,56 @@ export class PlacesService {
     imageUrl: string
   ) {
     let generatedId: string;
-    const newPlace = new Place(
-      Math.random().toString(),
-      title,
-      description,
-      imageUrl,
-      price,
-      dateFrom,
-      dateTo,
-      this.authService.userId,
-      location
-    );
-
-    return this.http
-      .post<{ name: string }>(
-        environment.firebaseAPIUrl + 'offered-places.json',
-        {
-          ...newPlace,
-          id: null,
+    let fetchedUserId: string;
+    let newPlace: Place;
+    return this.authService.userId.pipe(
+      // get 1 userId - do not set up ongoing subscription
+      take(1),
+      switchMap((userId) => {
+        fetchedUserId = userId;
+        return this.authService.token;
+      }),
+      take(1),
+      switchMap((token) => {
+        if (!fetchedUserId) {
+          throw new Error('No user found');
         }
-      )
-      .pipe(
-        // switchMap takes the existing Observable chain
-        // and result of that chain (resData)
-        // then it returns a new Observable that replaces the old Observable
-        switchMap((resData) => {
-          // get the id from firebase
-          generatedId = resData.name;
-          return this.places;
-        }),
-        // take(1) place
-        take(1),
-        tap((places) => {
-          // we're working with places array because of to switchMap
-          newPlace.id = generatedId;
-          this._places.next(places.concat(newPlace));
-        })
-      );
+        newPlace = new Place(
+          Math.random().toString(),
+          title,
+          description,
+          imageUrl,
+          price,
+          dateFrom,
+          dateTo,
+          fetchedUserId,
+          location
+        );
+
+        return this.http.post<{ name: string }>(
+          environment.firebaseAPIUrl + 'offered-places.json?auth=' + token,
+          {
+            ...newPlace,
+            id: null,
+          }
+        );
+      }),
+      // switchMap takes the existing Observable chain
+      // and result of that chain (resData)
+      // then it returns a new Observable that replaces the old Observable
+      switchMap((resData) => {
+        // get the id from firebase
+        generatedId = resData.name;
+        return this.places;
+      }),
+      // take(1) place
+      take(1),
+      tap((places) => {
+        // we're working with places array because of to switchMap
+        newPlace.id = generatedId;
+        this._places.next(places.concat(newPlace));
+      })
+    );
 
     // take(1) - (emit provided number of values, then complete) - emit current latest list of places, then complete
     // return this._places.pipe(
@@ -201,7 +224,13 @@ export class PlacesService {
   updatePlace(placeId: string, title: string, description: string) {
     // create the variable so that we can use it in tap()
     let updatedPlaces: Place[];
-    return this.places.pipe(
+    let fetchedToken;
+    return this.authService.token.pipe(
+      take(1),
+      switchMap((token) => {
+        fetchedToken = token;
+        return this.places;
+      }),
       // take latest snapshot and complete
       take(1),
       // switch Observables (places -> http request)
@@ -231,7 +260,8 @@ export class PlacesService {
           oldPlace.location
         );
         return this.http.put(
-          environment.firebaseAPIUrl + `offered-places/${placeId}.json`,
+          environment.firebaseAPIUrl +
+            `offered-places/${placeId}.json?auth=${fetchedToken}`,
           { ...updatedPlaces[updatedPlaceIndex], id: null }
         );
       }),

@@ -61,12 +61,7 @@
           >
             Switch to {{ isLogin ? 'Sign Up' : 'Login' }}
           </ion-button>
-          <ion-button
-            (click)="onLogin()"
-            expand="block"
-            type="submit"
-            [disabled]="!f.valid"
-          >
+          <ion-button expand="block" type="submit" [disabled]="!f.valid">
             {{ isLogin ? 'Login' : 'Sign Up' }}
           </ion-button>
         </ion-col>
