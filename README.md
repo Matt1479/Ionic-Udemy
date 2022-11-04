@@ -38,6 +38,8 @@
 
 ### <a href="#t15">**Section 15: Adding Authentication**</a>
 
+### <a href="#t16">**Section 16: Publishing the Apps**</a>
+
 </nav>
 
 <br><br>
@@ -7653,4 +7655,275 @@ Learn more about JSON Web Tokens: https://jwt.io/
 
 <hr>
 
-# **TOMORROW: RE-READ IMPORTANT PARTS (e.g. Capacitor's Storage), REVIEW CODE (Optional), FIX LINKS, PUSH**
+<br><br>
+
+## **Section 16: Publishing the Apps** <a href="#navi">&#8593;</a> <span id="t16"></span>
+
+<br><br>
+
+1. <a href="#i1600">Introduction</a>
+2. <a href="#i1601">zzz</a>
+3. <a href="#i1602">zzz</a>
+4. <a href="#i1603">zzz</a>
+5. <a href="#i1604">zzz</a>
+6. <a href="#i1605">zzz</a>
+7. <a href="#i1606">zzz</a>
+
+<br><br>
+
+### **Introduction** <span id="i1600"></span><a href="#t16">&#8593;</a>
+
+<br>
+
+In this module:
+
+- Adding Icons & a Splash Screen
+- Deploying an Android App
+- Deploying an iOS App
+- Deploying a (Progressive) Web App
+
+<br><br>
+
+### **Preparing App Configs: Android & iOS** <span id="i1601"></span><a href="#t16">&#8593;</a>
+
+<br>
+
+- Build the (web) App: `ng build`
+- Copy & Build Web App to Android App: `ionic cap sync android`
+- Copy & Build Web App to iOS App: `ionic capacitor sync ios`
+- (optional) Open: `ionic cap open <platform>` (android/ios)
+- set the appId (`capacitor.config.ts`) - this is a must if you want to deploy it to App Store:
+  - e.g.
+    - `appId: 'com.udemycourse.ionicangular'`
+    - `com.myapp.calendar.2022`
+
+<br>
+
+- config:
+
+> Android: `AndroidManifest.xml`
+
+- **Configuring Android** - Capacitor Docs: https://capacitorjs.com/docs/android/configuration
+
+- set the `package="appId"` - to the id you've set in `capacitor.config.ts`:
+
+```xml
+<manifest ... package="com.udemycourse.ionicangular">
+```
+
+<br>
+
+> Changing the App Name & Other Settings:
+
+`android/app/src/res/strings.xml`:
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+  <string name="app_name">PairBnB</string>
+  <!-- e.g. shown in task manager -->
+  <string name="title_activity_main">PairBnB</string>
+  <!-- set both to your appId -->
+  <string name="package_name">com.udemycourse.ionicangular</string>
+  <string name="custom_url_scheme">com.udemycourse.ionicangular</string>
+</resources>
+```
+
+- **IMPORTANT** - configuring `build.gradle`:
+
+  - https://capacitorjs.com/docs/android/configuration#changing-the-package-id
+  - `build.gradle` - setting the `appId`, changing versions, etc...
+  -
+
+  ```conf
+    defaultConfig {
+        applicationId "com.udemycourse.ionicangular"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+  ```
+
+- Changing Version:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ... -->
+```
+
+<br>
+
+> iOS: `ios/App/App/info.plist`
+
+- **Configuring iOS** - Capacitor Docs: https://capacitorjs.com/docs/ios/configuration
+
+```xml
+    <key>CFBundleDisplayName</key>
+    <string>YourAppName</string>
+```
+
+Version (change in xcode), e.g.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ... -->
+<plist version="1.0">
+```
+
+- Change it every time you add some updates...
+
+<br><br>
+
+### **Custom Icons & Splash Screens** <span id="i1602"></span><a href="#t16">&#8593;</a>
+
+<br>
+
+============
+
+**Setting up Icons**
+
+============
+
+<br>
+
+> **iOS**
+
+- (Android & iOS) Generating icons & splash screens: https://apetools.webprofusion.com/#/tools/imagegorilla
+  - in xcode - drag and drop icons
+
+<br>
+
+> **Android**
+
+- `ionic cap open android`
+- click on app (dir)
+- right click on res -> New -> Image Asset
+- Icon Type: Launcher Icons (Adaptive and Legacy)
+- Path: (path to your icons)
+- Background Layer: choose a bg color...
+
+============
+
+**Setting up Splash Screens**
+
+============
+
+<br>
+
+- (Android & iOS) Generating icons & splash screens: https://apetools.webprofusion.com/#/tools/imagegorilla
+  - generate for Android (splash screens only)
+- go to: `android/src/main/res/` and replace all instances of `splash.png`s with your custom ones
+
+<br><br>
+
+### **Android Deployment** <span id="i1603"></span><a href="#t16">&#8593;</a>
+
+<br>
+
+- Android Studio: build -> Generate Signed Bundle / APK...
+  - Android App Bundle
+  - keystore:
+    - create new
+    - path: `your-project-path/keystore`
+    - password: ... (e.g. ionicangular)
+    - key:
+      - alias: can be default
+      - password ...
+    - Certificate: first/last name, organization, city, etc...
+  - build variants: release
+
+<br>
+
+This will bundle your application which can be uploaded to Play Store.
+
+<br>
+
+- Google Play Store Console: https://play.google.com/console/about/
+  - Sign-in with your Google Account -> Accept Developer Agreement -> Play Registration Fee -> Complete...
+    - Log in
+    - Create Application
+    - Title: Your App Name
+    - Create -> Fill out information, upload some images, etc...
+  - App Releases:
+    - Production -> Manage -> Create a Release -> Continue
+      - Browse Files -> Upload your APK
+        - `project-dir/android/app/release/app-release.aab` (app bundle)
+    - once you finish the rest you can deploy your app bundle.
+
+<br><br>
+
+### **Deployment** <span id="i1604"></span><a href="#t16">&#8593;</a>
+
+<br>
+
+- Xcode: Provisioning Profile - Xcode Managed Profile
+  - you will need Apple Developer Account (paid)
+  - Certificates, IDs & Profiles
+    - App IDs
+      - name & ID
+      - register
+  - Account -> App Store Connect
+    - Users and Access -> My Apps
+    - New App
+      - fill up the form
+- XcodeL: stop app
+  - choose Generic iOS Device
+  - Product -> Archive
+    - wait for it to bundle the App
+    - Distribute App
+    - upload the App
+
+<br><br>
+
+### **Web Development** <span id="i1605"></span><a href="#t16">&#8593;</a>
+
+<br>
+
+?Good to run first:
+
+- `ng update`
+- `npm install -g @angular/cli`
+
+<br>
+
+> Turning your ng App into Progressive Web App:
+
+- `ng add @angular/pwa`
+- defaults are okay, you can set them up later: https://angular.io/guide/service-worker-config
+- you can set up your own icons/favicons for your Web App
+  - `src/app/assets/icon/favicon.ico`
+  - `src/app/assets/icons/...`
+
+> Deployment
+
+You can deploy it to Firebase, or you can also deploy it to any static website host (you only need a host capable of serving HTML/JavaScript/CSS)
+
+- Deploying to Firebase
+  - `firebase init`
+    - choose hosting
+    - public directory: www (or dist, etc)
+    - configure as single page app: y
+    - DO NOT overwrite index.html
+  - settings: `firebase.json` (you can leave defaults)
+  - `firebase deploy`
+
+<br><br>
+
+### **Useful Resources & Links** <span id="i1606"></span><a href="#t16">&#8593;</a>
+
+<br>
+
+- Ionic iOS Publishing Docs: https://ionicframework.com/docs/publishing/app-store
+- Ionic Android Publishing Docs: https://ionicframework.com/docs/publishing/play-store
+- Ionic PWA Publishing Docs: https://ionicframework.com/docs/publishing/progressive-web-app
+
+<br><br>
+
+<hr>
