@@ -7662,12 +7662,12 @@ Learn more about JSON Web Tokens: https://jwt.io/
 <br><br>
 
 1. <a href="#i1600">Introduction</a>
-2. <a href="#i1601">zzz</a>
-3. <a href="#i1602">zzz</a>
-4. <a href="#i1603">zzz</a>
-5. <a href="#i1604">zzz</a>
-6. <a href="#i1605">zzz</a>
-7. <a href="#i1606">zzz</a>
+2. <a href="#i1601">Preparing App Configs: Android & iOS</a>
+3. <a href="#i1602">Custom Icons & Splash Screens</a>
+4. <a href="#i1603">Android Deployment</a>
+5. <a href="#i1604">Deployment</a>
+6. <a href="#i1605">Web Development</a>
+7. <a href="#i1606">Useful Resources & Links</a>
 
 <br><br>
 
